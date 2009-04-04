@@ -5,6 +5,7 @@ use strict;
 package My::BaseObject;
 use base qw/Data::ObjectDriver::BaseObject/;
 
+die "inactive";
 sub install_properties {
     my $this = shift;
     my $props = $this->SUPER::install_properties(@_);
@@ -15,6 +16,7 @@ sub install_properties {
 package Wine;
 use base qw( My::BaseObject );
 
+die "inactive";
 use Data::ObjectDriver::Driver::DBI;
 
 __PACKAGE__->install_properties({

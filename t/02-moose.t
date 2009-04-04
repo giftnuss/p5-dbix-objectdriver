@@ -4,10 +4,9 @@ use strict;
 
 use lib 't/lib';
 use lib 't/lib/moose';
-use lib 't/lib/cached';
-
 require 't/lib/db-common.pl';
 
+#$Data::ObjectDriver::DEBUG=1;
 use Test::More;
 use Test::Exception;
 
@@ -34,6 +33,7 @@ setup_dbs({
 { 
     my $w = Wine->new;
     ok $w->name("name");
+    use YAML; warn Dump [$w->primary_key_tuple];
     dies_ok { $w->inexistent("hell") } "dies on setting inexistent column : 'inexistent()'";
 }
 

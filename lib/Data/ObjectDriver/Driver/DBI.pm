@@ -146,7 +146,7 @@ sub fetch {
         push @bind, \$rec->{ $map->{$col} };
     }
 
-    my $dbh = $driver->r_handle($class->properties->{db});
+    my $dbh = $driver->r_handle($class->meta->db);
     $driver->start_query($sql, $stmt->{bind});
 
     my $sth = $orig_args->{no_cached_prepare} ? $dbh->prepare($sql) : $driver->_prepare_cached($dbh, $sql);
@@ -286,7 +286,7 @@ sub exists {
     my $stmt = $driver->prepare_statement($class, $terms, { limit => 1 });
     my $sql = "SELECT 1 FROM $tbl\n";
     $sql .= $stmt->as_sql_where;
-    my $dbh = $driver->r_handle($obj->properties->{db});
+    my $dbh = $driver->r_handle($obj->meta->db);
     $driver->start_query($sql, $stmt->{bind});
     my $sth = $driver->_prepare_cached($dbh, $sql);
     $sth->execute(@{ $stmt->{bind} });
@@ -366,13 +366,13 @@ sub _insert_or_replace {
                   @$cols) .
             ')' . "\n" .
             'VALUES (' . join(', ', ('?') x @$cols) . ')' . "\n";
-    my $dbh = $driver->rw_handle($obj->properties->{db});
+    my $dbh = $driver->rw_handle($obj->meta->db);
     $driver->start_query($sql, $obj->{column_values});
     my $sth = $driver->_prepare_cached($dbh, $sql);
     my $i = 1;
-    my $col_defs = $obj->properties->{column_defs};
+    my $col_defs = $obj->meta->column_defs;
     for my $col (@$cols) {
-        my $val = $obj->column($col);
+        my $val = $obj->$col();
         my $type = $col_defs->{$col} || 'char';
         my $attr = $dbd->bind_param_attributes($type, $obj, $col);
         $sth->bind_param($i++, $val, $attr);
@@ -435,13 +435,13 @@ sub update {
         });
     $sql .= $stmt->as_sql_where;
 
-    my $dbh = $driver->rw_handle($obj->properties->{db});
+    my $dbh = $driver->rw_handle($obj->meta->db);
     $driver->start_query($sql, $obj->{column_values});
     my $sth = $driver->_prepare_cached($dbh, $sql);
     my $i = 1;
-    my $col_defs = $obj->properties->{column_defs};
+    my $col_defs = $obj->meta->column_defs;
     for my $col (@changed_cols) {
-        my $val = $obj->column($col);
+        my $val = $obj->$col;
         my $type = $col_defs->{$col} || 'char';
         my $attr = $dbd->bind_param_attributes($type, $obj, $col);
         $sth->bind_param($i++, $val, $attr);
@@ -496,7 +496,7 @@ sub remove {
     my $sql = "DELETE FROM $tbl\n";
     my $stmt = $driver->prepare_statement(ref($obj), $obj->primary_key_to_terms);
     $sql .= $stmt->as_sql_where;
-    my $dbh = $driver->rw_handle($obj->properties->{db});
+    my $dbh = $driver->rw_handle($obj->meta->db);
     $driver->start_query($sql, $stmt->{bind});
     my $sth = $driver->_prepare_cached($dbh, $sql);
     my $result = $sth->execute(@{ $stmt->{bind} });
@@ -531,7 +531,7 @@ sub direct_remove {
         $sql .= $stmt->as_limit;
     }
 
-    my $dbh = $driver->rw_handle($class->properties->{db});
+    my $dbh = $driver->rw_handle($class->meta->db);
     $driver->start_query($sql, $stmt->{bind});
     my $sth = $driver->_prepare_cached($dbh, $sql);
     my $result = $sth->execute(@{ $stmt->{bind} });
@@ -565,7 +565,7 @@ sub bulk_insert {
 
 
     # pass this directly to the backend DBD
-    my $dbh = $driver->rw_handle($class->properties->{db});
+    my $dbh = $driver->rw_handle($class->meta->db);
     my $tbl  = $driver->table_for($class);
     my @db_cols =  map {$dbd->db_column_name($tbl, $_) } @{$cols};
 
