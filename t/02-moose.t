@@ -33,7 +33,7 @@ setup_dbs({
 { 
     my $w = Wine->new;
     ok $w->name("name");
-    use YAML; warn Dump [$w->primary_key_tuple];
+    ok $w->is_changed('name');
     dies_ok { $w->inexistent("hell") } "dies on setting inexistent column : 'inexistent()'";
 }
 
@@ -186,8 +186,7 @@ setup_dbs({
     #$r->refresh;
     my $id = $r->recipe_id;
     $r->title('replaced');
-    $r->recipe_id("lamer");
-    dies_ok { $r->replace };
+    dies_ok { $r->recipe_id("lamer") };
     $r = Recipe->lookup($id);
     ok $r;
     is $r->title, "to replace";
@@ -197,8 +196,7 @@ setup_dbs({
         no warnings 'redefine';
         local *Data::ObjectDriver::Driver::DBD::SQLite::can_replace = sub { 0 };
         $r->title('replaced');
-        $r->recipe_id("lamer");
-        dies_ok { $r->replace };
+        dies_ok { $r->recipe_id("lamer") };
         $r = Recipe->lookup($id);
         ok $r;
         is $r->title, "to replace";

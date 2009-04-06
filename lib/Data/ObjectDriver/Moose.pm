@@ -24,9 +24,9 @@ use warnings;
 use Moose ();
 use Moose::Exporter;
 use Moose::Util::MetaRole;
+use Data::ObjectDriver::Role::Object;
 use Data::ObjectDriver::Moose::Base;
 use Data::ObjectDriver::Role::Meta::Class;
-use Data::ObjectDriver::Role::Object;
 
 Moose::Exporter->setup_import_methods(
     with_caller => [ 'columns', 'datasource', 'driver', 'primary_key' ],

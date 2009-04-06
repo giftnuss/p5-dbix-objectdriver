@@ -11,8 +11,8 @@ use Carp ();
 use Data::ObjectDriver::ResultSet;
 
 has changed_columns => (
-    is => 'rw',
-    isa => 'HashRef',
+    is      => 'rw',
+    isa     => 'HashRef',
     default => sub { {} },
 );
 
@@ -541,7 +541,7 @@ sub inflate {
     my($deflated) = @_;
     my $obj = $class->new;
     $obj->set_values($deflated->{columns});
-    $obj->{changed_cols} = {};
+    $obj->changed_columns({});
     $obj->call_trigger('post_inflate');
     return $obj;
 }

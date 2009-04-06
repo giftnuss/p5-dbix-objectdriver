@@ -459,7 +459,7 @@ sub update {
     $obj->call_trigger('post_save', $orig_obj);
     $obj->call_trigger('post_update', $orig_obj);
 
-    $orig_obj->changed_colums({});
+    $orig_obj->changed_columns({});
     return $rows;
 }
 

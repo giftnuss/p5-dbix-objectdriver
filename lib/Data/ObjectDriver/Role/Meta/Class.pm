@@ -3,9 +3,16 @@ use Carp;
 use Moose::Role;
 use Moose::Util::TypeConstraints;
 
-my $has_changed = sub {
-    my ($instance, $value) = @_;
-    warn "Changing $instance to $value";
+sub after_has_changed {
+    my $attr = shift;
+    return sub {
+        my ($instance, $value) = @_;
+        #warn "Changing $instance $attr to $value";
+        # ugly
+        my $changed_columns = $instance->changed_columns || {};
+        $changed_columns->{$attr}++;
+        $instance->changed_columns($changed_columns);
+    }
 };
 
 sub set_columns {
@@ -22,7 +29,7 @@ sub set_columns {
         my %except = map { $_ => 1 } @{ $_[1] || [] }; 
         my %attributes = %{ $caller->meta->get_attribute_map };
         for (keys %attributes) {
-            $meta->add_after_method_modifier( $_, sub { warn "AFTER"} );
+            $meta->add_after_method_modifier( $_, after_has_changed($_) );
         }
         my @columns = grep { ! $except{$_} } keys %attributes;
         $meta->columns( \@columns );

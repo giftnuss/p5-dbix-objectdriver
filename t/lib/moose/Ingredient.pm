@@ -5,7 +5,7 @@ use Moose::Util::TypeConstraints;
 
 subtype 'vchar'
     => as Str
-    => where { defined($_) && bytes::length($_) < 255 }
+    => where { use bytes; defined($_) && bytes::length($_) < 255 }
     => message { "The vchar you provided shouldn't exceed 255 char" };
 
 has id        => ( isa => 'Int', is => 'rw' );
