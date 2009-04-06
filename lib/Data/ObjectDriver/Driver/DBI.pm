@@ -398,7 +398,7 @@ sub _insert_or_replace {
     $obj->call_trigger('post_insert', $orig_obj);
 
     $orig_obj->{__is_stored} = 1;
-    $orig_obj->{changed_cols} = {};
+    $orig_obj->changed_columns({});
     1;
 }
 
@@ -413,7 +413,7 @@ sub update {
     $obj->call_trigger('pre_update', $orig_obj);
 
     my $cols = $obj->column_names;
-    my @changed_cols = $obj->changed_cols;
+    my @changed_cols = $obj->changed_columns;
 
     ## If there's no updated columns, update() is no-op
     ## but we should call post_* triggers
@@ -459,7 +459,7 @@ sub update {
     $obj->call_trigger('post_save', $orig_obj);
     $obj->call_trigger('post_update', $orig_obj);
 
-    $orig_obj->{changed_cols} = {};
+    $orig_obj->changed_colums({});
     return $rows;
 }
 

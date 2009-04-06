@@ -10,6 +10,12 @@ use Carp ();
 
 use Data::ObjectDriver::ResultSet;
 
+has changed_colmuns => (
+    is => 'rw',
+    isa => 'HashRef',
+    default => sub { {} },
+);
+
 ## Global Transaction variables
 our @WorkingDrivers;
 our $TransactionLevel = 0;
@@ -338,24 +344,14 @@ sub column_func {
     die "column_func is deprecated";
 }
 
-sub changed_cols_and_pk {
-    my $obj = shift;
-    keys %{$obj->{changed_cols}};
-}
-
-sub changed_cols {
-    my $obj = shift;
-    my $pk = $obj->primary_key_tuple;
-    my %pk = map { $_ => 1 } @$pk;
-    grep !$pk{$_}, $obj->changed_cols_and_pk;
-}
-
+## semantic sucks XXX
 sub is_changed {
     my $obj = shift;
+    my $changed_columns = $obj->changed_colums;
     if (@_) {
-        return exists $obj->{changed_cols}->{$_[0]};
+        return exists $changed_columns->{$_[0]};
     } else {
-        return $obj->changed_cols > 0;
+        return %$changed_columns ? 1 : 0;
     }
 }
 

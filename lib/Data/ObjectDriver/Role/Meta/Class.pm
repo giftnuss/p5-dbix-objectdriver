@@ -3,6 +3,11 @@ use Carp;
 use Moose::Role;
 use Moose::Util::TypeConstraints;
 
+my $has_changed = sub {
+    my ($instance, $value) = @_;
+    warn "Changing $instance to $value";
+};
+
 sub set_columns {
     my $meta = shift;
     my $caller = shift;
@@ -16,6 +21,9 @@ sub set_columns {
     elsif ($first eq 'all') {
         my %except = map { $_ => 1 } @{ $_[1] || [] }; 
         my %attributes = %{ $caller->meta->get_attribute_map };
+        for (keys %attributes) {
+            has "+$_" => (trigger => sub { warn "trigger" });
+        }
         my @columns = grep { ! $except{$_} } keys %attributes;
         $meta->columns( \@columns );
         return 1;
