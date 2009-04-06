@@ -18,11 +18,11 @@ sub set_columns {
         return $meta->columns($first);
     }
     ## - or, all, except => [not_col1, not_col2]
-    elsif ($first eq 'all') {
+    elsif ($first && $first eq 'all') {
         my %except = map { $_ => 1 } @{ $_[1] || [] }; 
         my %attributes = %{ $caller->meta->get_attribute_map };
         for (keys %attributes) {
-            has "+$_" => (trigger => sub { warn "trigger" });
+            $meta->add_after_method_modifier( $_, sub { warn "AFTER"} );
         }
         my @columns = grep { ! $except{$_} } keys %attributes;
         $meta->columns( \@columns );

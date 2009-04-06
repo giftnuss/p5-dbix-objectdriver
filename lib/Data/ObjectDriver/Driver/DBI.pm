@@ -413,7 +413,7 @@ sub update {
     $obj->call_trigger('pre_update', $orig_obj);
 
     my $cols = $obj->column_names;
-    my @changed_cols = $obj->changed_columns;
+    my @changed_cols = $obj->changed_columns_array;
 
     ## If there's no updated columns, update() is no-op
     ## but we should call post_* triggers

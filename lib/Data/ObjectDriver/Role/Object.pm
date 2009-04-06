@@ -10,11 +10,16 @@ use Carp ();
 
 use Data::ObjectDriver::ResultSet;
 
-has changed_colmuns => (
+has changed_columns => (
     is => 'rw',
     isa => 'HashRef',
     default => sub { {} },
 );
+
+sub changed_columns_array {
+    my $object = shift;
+    return keys %{$object->changed_columns || {}};
+}
 
 ## Global Transaction variables
 our @WorkingDrivers;
@@ -347,7 +352,7 @@ sub column_func {
 ## semantic sucks XXX
 sub is_changed {
     my $obj = shift;
-    my $changed_columns = $obj->changed_colums;
+    my $changed_columns = $obj->changed_columns;
     if (@_) {
         return exists $changed_columns->{$_[0]};
     } else {
