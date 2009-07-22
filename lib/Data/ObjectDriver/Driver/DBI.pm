@@ -367,7 +367,7 @@ sub _insert_or_replace {
             ')' . "\n" .
             'VALUES (' . join(', ', ('?') x @$cols) . ')' . "\n";
     my $dbh = $driver->rw_handle($obj->properties->{db});
-    $driver->start_query($sql, $obj->{column_values});
+    $driver->start_query($sql, $obj->column_values);
     my $sth = $driver->_prepare_cached($dbh, $sql);
     my $i = 1;
     my $col_defs = $obj->properties->{column_defs};
@@ -397,8 +397,8 @@ sub _insert_or_replace {
     $obj->call_trigger('post_save', $orig_obj);
     $obj->call_trigger('post_insert', $orig_obj);
 
-    $orig_obj->{__is_stored} = 1;
-    $orig_obj->{changed_cols} = {};
+    $orig_obj->__is_stored = 1;
+    $orig_obj->reset_changed_cols;
     1;
 }
 

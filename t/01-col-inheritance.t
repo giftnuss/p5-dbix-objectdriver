@@ -17,7 +17,7 @@ setup_dbs({
 });
 
 use Wine;
-
+use Data::Dumper;
 my $wine = Wine->new;
 my %expected = map { $_ => 1 } qw(name rating id cluster_id content binchar); 
 my %data;

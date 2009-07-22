@@ -10,8 +10,7 @@ use Data::ObjectDriver;
 use Data::ObjectDriver::SQL;
 use Data::ObjectDriver::BaseObject;
 
-Test::ClassAPI->execute('complete');
-
+Test::ClassAPI->execute('complete') unless $@;
 
 __DATA__
    

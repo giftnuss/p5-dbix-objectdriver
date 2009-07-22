@@ -5,9 +5,9 @@ use strict;
 package My::BaseObject;
 use base qw/Data::ObjectDriver::BaseObject/;
 
-sub install_properties {
+sub _install_properties {
     my $this = shift;
-    my $props = $this->SUPER::install_properties(@_);
+    my $props = $this->SUPER::_install_properties(@_);
     $this->install_column('rating');
     return $props;
 }
@@ -17,7 +17,7 @@ use base qw( My::BaseObject );
 
 use Data::ObjectDriver::Driver::DBI;
 
-__PACKAGE__->install_properties({
+sub install_properties {{
     # rating is defined on the fly in My::BaseObject 
     columns => [ 'id', 'cluster_id', 'name', 'content', 'binchar'],
     datasource => 'wines',
@@ -26,7 +26,7 @@ __PACKAGE__->install_properties({
     driver => Data::ObjectDriver::Driver::DBI->new(
         dsn      => 'dbi:SQLite:dbname=global.db',
     ),
-});
+}};
 
 sub insert {
     my $obj = shift;

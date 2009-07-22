@@ -10,9 +10,10 @@ $HasWeaken = !$@;
 
 use Carp ();
 
-use Class::Trigger qw( pre_save post_save post_load pre_search
-                       pre_insert post_insert pre_update post_update
-                       pre_remove post_remove post_inflate );
+#use Class::Trigger qw( pre_save post_save post_load pre_search
+#                       pre_insert post_insert pre_update post_update
+#                       pre_remove post_remove post_inflate );
+sub call_trigger {}
 
 use Data::ObjectDriver::ResultSet;
 
@@ -20,44 +21,97 @@ use Data::ObjectDriver::ResultSet;
 our @WorkingDrivers;
 our $TransactionLevel = 0;
 
-sub install_properties {
-    my $class = shift;
-    my($props) = @_;
-    my $columns = delete $props->{columns};
-    $props->{columns} = [];
-    {
-        no strict 'refs'; ## no critic
-        *{"${class}::__properties"} = sub { $props };
+use subs qw/init/;
+use HO::class
+    _lvalue => properties => '%',
+    _rw => column_values => '%',
+    _rw => _changed_cols => '%',
+    _lvalue => __is_stored => '$'
+    ;
+
+use HO::abstract method => qw/install_properties/;
+use Data::Dumper;
+
+sub init {
+    my $self = shift;
+    $self->_install_properties($self->install_properties);
+
+    while (@_) {
+        my $field = shift;
+        my $val   = shift;
+        $self->$field($val);
     }
+    return $self;
+}
+
+sub _install_properties {
+    my $self = shift;
+    my($props) = @_;
+
+    my $columns = delete $props->{columns} || [];
+    $props->{columns} = [];
+    $self->properties = $props;
 
     foreach my $col (@$columns) {
-        $class->install_column($col);
+        $self->install_column($col);
     }
     return $props;
 }
 
 sub install_column {
-    my($class, $col, $type) = @_;
-    my $props = $class->properties;
+    my($self, $col, $type) = @_;
+    my $props = $self->properties;
 
     push @{ $props->{columns} }, $col;
     $props->{column_names}{$col} = ();
     # predefine getter/setter methods here
     # Skip adding this method if the class overloads it.
     # this lets the SUPER::columnname magic do it's thing
-    if (! $class->can($col)) {
+    my $class = ref($self);
+    if (! $self->can($col)) {
         no strict 'refs'; ## no critic
-        *{"${class}::$col"} = $class->column_func($col);
+        *{"${class}::$col"} = $self->column_func($col);
     }
     if ($type) {
         $props->{column_defs}{$col} = $type;
     }
 }
 
-sub properties {
-    my $this = shift;
-    my $class = ref($this) || $this;
-    $class->__properties;
+sub AUTOLOAD {
+    my $obj = $_[0];
+    (my $col = our $AUTOLOAD) =~ s!.+::!!;
+    Carp::croak("Cannot find method '$col' for class '$obj'") unless ref $obj;
+
+    unless ($obj->has_column($col)) {
+        Carp::croak("Cannot find column '$col' for class '" . ref($obj) . "'");
+    }
+
+    {
+        no strict 'refs'; ## no critic
+        *$AUTOLOAD = $obj->column_func($col);
+    }
+
+    goto &$AUTOLOAD;
+}
+
+sub column_func {
+    my $obj = shift;
+    my $col = shift or die "Must specify column";
+
+    return sub {
+        my $obj = shift;
+        # getter
+        return $obj->column_values->{$col} unless (@_);
+
+        # setter
+        my ($val, $flags) = @_;
+        $obj->column_values->{$col} = $val;
+        unless ($flags && ref($flags) eq 'HASH' && $flags->{no_changed_flag}) {
+            $obj->_changed_cols->{$col}++;
+        }
+
+        return $obj->column_values->{$col};
+    };
 }
 
 # see docs below
@@ -188,23 +242,6 @@ sub driver {
 sub get_driver {
     my $class = shift;
     $class->properties->{get_driver} = shift if @_;
-}
-
-sub new {
-    my $obj = bless {}, shift;
-
-    return $obj->init(@_);
-}
-
-sub init {
-    my $self = shift;
-
-    while (@_) {
-        my $field = shift;
-        my $val   = shift;
-        $self->$field($val);
-    }
-    return $self;
 }
 
 sub is_pkless {
@@ -357,7 +394,7 @@ sub clone_all {
     my $obj = shift;
     my $clone = ref($obj)->new();
     $clone->set_values_internal($obj->column_values);
-    $clone->{changed_cols} = defined $obj->{changed_cols} ? { %{$obj->{changed_cols}} } : undef;
+    $clone->_changed_cols({%{$obj->_changed_cols}});
     $clone;
 }
 
@@ -369,8 +406,6 @@ sub column_names {
     ## Reference to a copy.
     [ @{ shift->properties->{columns} } ]
 }
-
-sub column_values { $_[0]->{'column_values'} ||= {} }
 
 ## In 0.1 version we didn't die on inexistent column
 ## which might lead to silent bugs
@@ -391,33 +426,12 @@ sub column {
         }
     }
 
-    $obj->{column_values}->{$col};
+    $obj->column_values->{$col};
 }
-
-sub column_func {
-    my $obj = shift;
-    my $col = shift or die "Must specify column";
-
-    return sub {
-        my $obj = shift;
-        # getter
-        return $obj->{column_values}->{$col} unless (@_);
-
-        # setter
-        my ($val, $flags) = @_;
-        $obj->{column_values}->{$col} = $val;
-        unless ($flags && ref($flags) eq 'HASH' && $flags->{no_changed_flag}) {
-            $obj->{changed_cols}->{$col}++;
-        }
-
-        return $obj->{column_values}->{$col};
-    };
-}
-
 
 sub changed_cols_and_pk {
     my $obj = shift;
-    keys %{$obj->{changed_cols}};
+    keys %{$obj->_changed_cols};
 }
 
 sub changed_cols {
@@ -425,6 +439,10 @@ sub changed_cols {
     my $pk = $obj->primary_key_tuple;
     my %pk = map { $_ => 1 } @$pk;
     grep !$pk{$_}, $obj->changed_cols_and_pk;
+}
+
+sub reset_changed_cols {
+    shift()->_changed_cols({});
 }
 
 sub is_changed {
@@ -624,22 +642,6 @@ sub inflate {
 }
 
 sub DESTROY { }
-
-sub AUTOLOAD {
-    my $obj = $_[0];
-    (my $col = our $AUTOLOAD) =~ s!.+::!!;
-    Carp::croak("Cannot find method '$col' for class '$obj'") unless ref $obj;
-    unless ($obj->has_column($col)) {
-        Carp::croak("Cannot find column '$col' for class '" . ref($obj) . "'");
-    }
-
-    {
-        no strict 'refs'; ## no critic
-        *$AUTOLOAD = $obj->column_func($col);
-    }
-
-    goto &$AUTOLOAD;
-}
 
 sub has_partitions {
     my $class = shift;
