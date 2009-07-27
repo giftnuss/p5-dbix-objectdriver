@@ -7,6 +7,7 @@ BEGIN: {
 };
 
 use Data::ObjectDriver;
+use Data::ObjectDriver::Driver::DBI;
 use Data::ObjectDriver::SQL;
 use Data::ObjectDriver::BaseObject;
 
@@ -16,6 +17,7 @@ __DATA__
    
 Class::Accessor::Fast   = interface
 Data::ObjectDriver      = class
+Data::ObjectDriver::Driver::DBI = class
 Data::ObjectDriver::SQL = class
 Data::ObjectDriver::BaseObject = class
 
@@ -34,23 +36,71 @@ mk_wo_accessors                 = method
 mutator_name_for                = method
 get                             = method
 set                             = method
+subname                         = method
 
 [Data::ObjectDriver]
 Class::Accessor::Fast = implements
 new                   = method
+begin_work            = method
+commit                = method
 init                  = method
 cache_object          = method
 debug                 = method
 end_query             = method
 list_or_iterator      = method
+logger                = method
 pk_generator          = method
 profiler              = method
 record_query          = method
+rollback              = method
 start_query           = method
+txn_active            = method
+uncache_object        = method
+
+[Data::ObjectDriver::Driver::DBI]
+begin_work  = method
+bulk_insert = method
+commit      = method
+connect_options = method
+direct_remove = method
+dbd         = method
+dbh         = method
+dsn         = method
+exists      = method
+fetch       = method
+fetch_data  = method
+force_no_prepared_cache = method
+generate_pk = method
+get_dbh     = method
+init_db     = method
+insert      = method
+last_error  = method
+load_object_from_rec = method
+logger      = method
+lookup      = method
+lookup_multi = method
+password    = method
+prefix      = method
+prepare_fetch = method
+prepare_statement = method
+r_handle    = method
+remove      = method
+replace     = method
+reuse_dbh   = method
+rw_handle   = method
+search      = method
+select_one  = method
+subname     = method
+table_for   = method
+update      = method
+username    = method
+
 
 [Data::ObjectDriver::SQL]
 Class::Accessor::Fast = implements
+add_complex_where     = method
 add_having    = method
+add_index_hint        = method
 add_join      = method
 add_select    = method
 add_where     = method
@@ -60,10 +110,14 @@ as_sql        = method
 as_sql_having = method
 as_sql_where  = method
 bind          = method
+column_mutator        = method
+comment               = method
+distinct              = method
 from          = method
 group         = method
 has_where     = method
 having        = method
+index_hint            = method
 joins         = method
 limit         = method
 offset        = method
@@ -71,11 +125,13 @@ order         = method
 select        = method
 select_map    = method
 select_map_reverse = method
+subname            = method
 where         = method
 where_values  = method
 
 [Data::ObjectDriver::BaseObject]
-add_trigger   = method
+# add_trigger   = method
+begin_work      = method
 bulk_insert   = method
 call_trigger  = method
 changed_cols  = method
@@ -87,6 +143,7 @@ column_func   = method
 column_names  = method
 column_values = method
 columns_of_type = method
+commit        = method
 datasource    = method
 deflate       = method
 driver        = method
@@ -105,11 +162,14 @@ install_properties = method
 is_changed    = method
 is_pkless     = method
 is_primary_key = method
+is_same       = method
 is_same_array = method
-last_trigger_results = method
+# last_trigger_results = method
 lookup        = method
 lookup_multi  = method
 new           = method
+object_is_stored = method
+pk_str        = method
 primary_key   = method
 primary_key_to_terms = method
 primary_key_tuple = method
@@ -117,6 +177,8 @@ properties    = method
 refresh       = method
 remove        = method
 replace       = method
+reset_changed_cols = method
+result        = method
 save          = method
 search        = method
 set_values    = method
@@ -124,4 +186,16 @@ set_values_internal = method
 update        = method
 weaken        = method
 
-
+# TRIGGER
+trigger      = method
+post_inflate = method
+post_insert  = method
+post_load    = method
+post_remove  = method
+post_save    = method
+post_update  = method
+pre_insert   = method
+pre_remove   = method
+pre_search   = method
+pre_update   = method
+pre_save     = method
