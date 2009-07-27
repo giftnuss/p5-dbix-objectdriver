@@ -10,11 +10,9 @@ sub new {
     my($name) = @_;
     die "No Driver" unless $name;
     my $subclass = join '::', $class, $name;
-    no strict 'refs';
-    unless (defined %{"${subclass}::"}) {
-        eval "use $subclass"; ## no critic
-        die $@ if $@;
-    }
+    eval "require $subclass"; ## no critic
+    die $@ if $@;
+    $subclass->import if $subclass->can('import');
     bless {}, $subclass;
 }
 
@@ -43,7 +41,6 @@ sub can_replace { 0 }
 sub can_prepare_cached_statements { 1 };
 
 sub sql_class { 'Data::ObjectDriver::SQL' }
-
 
 1;
 
