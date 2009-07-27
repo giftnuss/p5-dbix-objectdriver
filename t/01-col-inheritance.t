@@ -17,7 +17,7 @@ setup_dbs({
 });
 
 use Wine;
-use Data::Dumper;
+
 my $wine = Wine->new;
 my %expected = map { $_ => 1 } qw(name rating id cluster_id content binchar); 
 my %data;
@@ -27,7 +27,7 @@ for my $col (@{ $wine->column_names }) {
     ok $expected{$col}, "$col was expected";
 }
 for my $col (keys %expected) {
-    ok $data{$col}, "expected $col is present"; 
+    ok $data{$col}, "expected column $col is present"; 
 }
 $wine->name("Saumur Champigny, Le Grand Clos 2001");
 $wine->rating(4);
