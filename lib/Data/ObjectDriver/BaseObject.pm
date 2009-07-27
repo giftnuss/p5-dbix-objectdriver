@@ -10,10 +10,14 @@ $HasWeaken = !$@;
 
 use Carp ();
 
-#use Class::Trigger qw( pre_save post_save post_load pre_search
-#                       pre_insert post_insert pre_update post_update
-#                       pre_remove post_remove post_inflate );
-sub call_trigger {}
+use HO::Trigger qw( pre_save post_save post_load pre_search
+                     pre_insert post_insert pre_update post_update
+                     pre_remove post_remove post_inflate );
+sub call_trigger 
+    { my ($self,$trigger,@args) = @_
+    ; warn "CALL $trigger: " . join ' ',caller
+    ; $self->$trigger(@args)
+    }
 
 use Data::ObjectDriver::ResultSet;
 
@@ -26,7 +30,8 @@ use HO::class
     _lvalue => properties => '%',
     _rw => column_values => '%',
     _rw => _changed_cols => '%',
-    _lvalue => __is_stored => '$'
+    _lvalue => __is_stored => '$',
+    _rw => _trigger => 'trigger'
     ;
 
 use HO::abstract method => qw/install_properties/;
@@ -85,7 +90,6 @@ sub AUTOLOAD {
     unless ($obj->has_column($col)) {
         Carp::croak("Cannot find column '$col' for class '" . ref($obj) . "'");
     }
-
     {
         no strict 'refs'; ## no critic
         *$AUTOLOAD = $obj->column_func($col);
@@ -101,7 +105,7 @@ sub column_func {
     return sub {
         my $obj = shift;
         # getter
-        return $obj->column_values->{$col} unless (@_);
+        return $obj->column_values->{$col} unless @_;
 
         # setter
         my ($val, $flags) = @_;
@@ -235,8 +239,9 @@ sub has_a {
 }
 
 sub driver {
-    my $class = shift;
-    $class->properties->{driver} ||= $class->properties->{get_driver}->();
+    my $self = shift;
+    Carp::confess "Not a class method anymore." unless ref $self;
+    $self->properties->{driver} ||= $self->properties->{get_driver}->();
 }
 
 sub get_driver {
@@ -477,9 +482,9 @@ sub bulk_insert {
 }
 
 sub lookup {
-    my $class = shift;
-    my $driver = $class->driver;
-    my $obj = $driver->lookup($class, @_) or return;
+    my $self = shift;
+    my $driver = $self->driver;
+    my $obj = $driver->lookup($self, @_) or return;
     $driver->cache_object($obj);
     $obj;
 }
@@ -554,7 +559,7 @@ sub refresh {
     return unless $obj->has_primary_key;
     my $fields = $obj->fetch_data;
     $obj->set_values_internal($fields);
-    $obj->call_trigger('post_load');
+    $obj->post_load;
     $obj->driver->cache_object($obj);
     return 1;
 }
@@ -637,7 +642,7 @@ sub inflate {
     my $obj = $class->new;
     $obj->set_values($deflated->{columns});
     $obj->{changed_cols} = {};
-    $obj->call_trigger('post_inflate');
+    $obj->post_inflate;
     return $obj;
 }
 
