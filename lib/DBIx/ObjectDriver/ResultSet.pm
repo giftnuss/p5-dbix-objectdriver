@@ -1,6 +1,6 @@
 # $Id: BaseObject.pm 418 2007-11-29 18:08:10Z garth $
 
-package Data::ObjectDriver::ResultSet;
+package DBIx::ObjectDriver::ResultSet;
 
 ## Dependencies
 

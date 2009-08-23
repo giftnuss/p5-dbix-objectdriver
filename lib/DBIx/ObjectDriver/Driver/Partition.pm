@@ -1,11 +1,11 @@
 # $Id$
 
-package Data::ObjectDriver::Driver::Partition;
+package DBIx::ObjectDriver::Driver::Partition;
 use strict;
 use warnings;
 use Carp();
 
-use base qw( Data::ObjectDriver Class::Accessor::Fast );
+use base qw( DBIx::ObjectDriver Class::Accessor::Fast );
 
 __PACKAGE__->mk_accessors(qw( get_driver ));
 

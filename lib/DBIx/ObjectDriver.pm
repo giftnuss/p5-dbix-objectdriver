@@ -1,12 +1,12 @@
 # $Id$
 
-package Data::ObjectDriver;
+package DBIx::ObjectDriver;
 use strict;
 use warnings;
 use Class::Accessor::Fast;
 
 use base qw( Class::Accessor::Fast );
-use Data::ObjectDriver::Iterator;
+use DBIx::ObjectDriver::Iterator;
 
 __PACKAGE__->mk_accessors(qw( pk_generator txn_active ));
 
@@ -89,7 +89,7 @@ sub debug {
     my $i = 0;
     while (1) {
         @caller = caller($i++);
-        last if $caller[0] !~ /^(Data::ObjectDriver|$class)/;
+        last if $caller[0] !~ /^(DBIx::ObjectDriver|$class)/;
     }
 
     my $where = " in file $caller[1] line $caller[2]\n";
@@ -107,8 +107,8 @@ sub profiler {
     my $driver = shift;
     my ($sql) = @_;
     $PROFILER ||= eval {
-        require Data::ObjectDriver::Profiler;
-        Data::ObjectDriver::Profiler->new;
+        require DBIx::ObjectDriver::Profiler;
+        DBIx::ObjectDriver::Profiler->new;
     };
     return $PROFILE = 0 if $@ || !$PROFILER;
     return $PROFILER unless @_;
@@ -125,7 +125,7 @@ sub list_or_iterator {
         return @{$objs};
     } else {
         my $iter = sub { shift @{$objs} };
-        return Data::ObjectDriver::Iterator->new($iter);
+        return DBIx::ObjectDriver::Iterator->new($iter);
     }
 }
 

@@ -1,6 +1,6 @@
 # $Id$
 
-package Data::ObjectDriver::Driver::DBI;
+package DBIx::ObjectDriver::Driver::DBI;
 use strict;
 use warnings;
 
@@ -8,10 +8,10 @@ use base qw( Data::ObjectDriver Class::Accessor::Fast );
 
 use DBI;
 use Carp ();
-use Data::ObjectDriver::Errors;
-use Data::ObjectDriver::SQL;
-use Data::ObjectDriver::Driver::DBD;
-use Data::ObjectDriver::Iterator;
+use DBIx::ObjectDriver::Errors;
+use DBIx::ObjectDriver::SQL;
+use DBIx::ObjectDriver::Driver::DBD;
+use DBIx::ObjectDriver::Iterator;
 
 __PACKAGE__->mk_accessors(qw( dsn username password connect_options dbh get_dbh dbd prefix reuse_dbh force_no_prepared_cache));
 
@@ -34,7 +34,7 @@ sub init {
             my $dbh = $getter->();
             $type = $dbh->{Driver}{Name};
         }
-        $driver->dbd(Data::ObjectDriver::Driver::DBD->new($type));
+        $driver->dbd(DBIx::ObjectDriver::Driver::DBD->new($type));
     }
     $driver;
 }
@@ -335,8 +335,8 @@ sub _insert_or_replace {
 
     ## Use a duplicate so the pre_save trigger can modify it.
     my $obj = $orig_obj->clone_all;
-    $obj->call_trigger('pre_save', $orig_obj);
-    $obj->call_trigger('pre_insert', $orig_obj);
+    $obj->pre_save($orig_obj);
+    $obj->pre_insert($orig_obj);
 
     my $cols = $obj->column_names;
     if (!$obj->is_pkless && ! $obj->has_primary_key) {
@@ -394,8 +394,8 @@ sub _insert_or_replace {
         $orig_obj->$id_col($id);
     }
 
-    $obj->call_trigger('post_save', $orig_obj);
-    $obj->call_trigger('post_insert', $orig_obj);
+    $obj->post_save($orig_obj);
+    $obj->post_insert($orig_obj);
 
     $orig_obj->__is_stored = 1;
     $orig_obj->reset_changed_cols;

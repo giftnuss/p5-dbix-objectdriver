@@ -1,10 +1,10 @@
 # $Id$
 
-package Data::ObjectDriver::Driver::BaseCache;
+package DBIx::ObjectDriver::Driver::BaseCache;
 use strict;
 use warnings;
 
-use base qw( Data::ObjectDriver Class::Accessor::Fast
+use base qw( DBIx::ObjectDriver Class::Accessor::Fast
              Class::Data::Inheritable );
 
 use Carp ();
@@ -209,7 +209,7 @@ sub search {
             }
             return @window ? shift @window : undef;
         };
-        return Data::ObjectDriver::Iterator->new($iter, sub { @objs = (); @window = () });
+        return DBIx::ObjectDriver::Iterator->new($iter, sub { @objs = (); @window = () });
     } else {
         ## Load all of the objects using a lookup_multi, which is fast from
         ## cache.

@@ -1,11 +1,11 @@
 # $Id
 
-package Data::ObjectDriver::Driver::DBD::SQLite;
+package DBIx::ObjectDriver::Driver::DBD::SQLite;
 use strict;
 use warnings;
-use base qw( Data::ObjectDriver::Driver::DBD );
+use base qw( DBIx::ObjectDriver::Driver::DBD );
 
-use Data::ObjectDriver::Errors;
+use DBIx::ObjectDriver::Errors;
 
 # yes according to http://www.sqlite.org/lang_replace.html
 sub can_replace { 1 }
@@ -31,7 +31,7 @@ sub map_error_code {
     my $dbd = shift;
     my($code, $msg) = @_;
     if ($msg && $msg =~ /not unique/) {
-        return Data::ObjectDriver::Errors->UNIQUE_CONSTRAINT;
+        return DBIx::ObjectDriver::Errors->UNIQUE_CONSTRAINT;
     } else {
         return;
     }

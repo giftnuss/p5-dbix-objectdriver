@@ -1,6 +1,6 @@
 # $Id$
 
-package Data::ObjectDriver::Driver::DBD;
+package DBIx::ObjectDriver::Driver::DBD;
 use strict;
 use warnings;
 
@@ -40,7 +40,7 @@ sub can_replace { 0 }
 # Some drivers have problems with prepared caches
 sub can_prepare_cached_statements { 1 };
 
-sub sql_class { 'Data::ObjectDriver::SQL' }
+sub sql_class { 'DBIx::ObjectDriver::SQL' }
 
 1;
 

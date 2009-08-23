@@ -1,6 +1,6 @@
 # $Id$
 
-package Data::ObjectDriver::SQL;
+package DBIx::ObjectDriver::SQL;
 use strict;
 use warnings;
 
