@@ -147,20 +147,29 @@ sub prepare_fetch {
 
 sub fetch {
     my $driver = shift;
-    my($rec, $class, $orig_terms, $orig_args) = @_;
+    my ($ds, $rec, $orig_terms, $orig_args) = @_;
 
-    my ($sql, $bind, $stmt) = $driver->prepare_fetch($class, $orig_terms, $orig_args);
+    $rec = $driver->_with($rec) unless ref $rec;
+    $rec = $rec->() if ref $rec eq 'CODE';
+    # record magically changend inplace - kein guter Stil aber ok hier
+    $_[1] = $rec;
+
+    my ($sql, $bind, $stmt) = $driver->prepare_fetch($ds, $orig_terms, $orig_args);
 
     my @bind;
     my $map = $stmt->select_map;
+
     for my $col (@{ $stmt->select }) {
-        push @bind, \$rec->{ $map->{$col} };
+        push @bind, $rec->get_slot($map->{$col});
     }
 
-    my $dbh = $driver->r_handle($class->properties->{db});
+    my $dbh = $driver->r_handle($ds->properties->{db});
     $driver->start_query($sql, $stmt->{bind});
 
-    my $sth = $orig_args->{no_cached_prepare} ? $dbh->prepare($sql) : $driver->_prepare_cached($dbh, $sql);
+    my $sth = $orig_args->{no_cached_prepare} ? 
+                  $dbh->prepare($sql) :
+                  $driver->_prepare_cached($dbh, $sql);
+
     $sth->execute(@{ $stmt->{bind} });
     $sth->bind_columns(undef, @bind);
 
@@ -176,23 +185,22 @@ sub fetch {
 
 sub load_object_from_rec {
     my $driver = shift;
-    my ($class, $rec, $no_triggers) = @_;
+    my ($ds, $rec, $no_triggers) = @_;
 
-    my $obj = $class->new;
+    my $obj = $ds->create;
     $obj->set_values_internal($rec);
     ## Don't need a duplicate as there's no previous version in memory
     ## to preserve.
-    $obj->{__is_stored} = 1;
-    $obj->call_trigger('post_load') unless $no_triggers;
+    $obj->__is_stored = 1;
+    $obj->post_load unless $no_triggers;
     return $obj;
 }
 
 sub search {
-    my($driver) = shift;
-    my($class, $terms, $args) = @_;
+    my ($driver) = shift;
+    my ($ds, $rec, $terms, $args) = @_;
 
-    my $rec = {};
-    my $sth = $driver->fetch($rec, $class, $terms, $args);
+    my $sth = $driver->fetch($ds, $rec, $terms, $args);
 
     my $iter = sub {
         ## This is kind of a hack--we need $driver to stay in scope,
@@ -205,23 +213,14 @@ sub search {
             $driver->end_query($sth);
             return;
         }
-        return $driver->load_object_from_rec($class, $rec, $args->{no_triggers});
+        return $driver->load_object_from_rec($ds, $rec, $args->{no_triggers});
     };
 
-    if (wantarray) {
-        my @objs = ();
 
-        while (my $obj = $iter->()) {
-            push @objs, $obj;
-        }
-        return @objs;
-    } else {
-        my $iterator = Data::ObjectDriver::Iterator->new(
-            $iter, sub { _close_sth($sth); $driver->end_query($sth) },
-        );
-        return $iterator;
-    }
-    return;
+    my $iterator = DBIx::ObjectDriver::Iterator->new(
+        $iter, sub { _close_sth($sth); $driver->end_query($sth) },
+    );
+    return $iterator;
 }
 
 sub lookup {
@@ -283,18 +282,17 @@ sub table_for {
 
 sub exists {
     my $driver = shift;
-    my($obj) = @_;
+    my($ds) = @_;
     return unless $obj->has_primary_key;
 
     ## should call pre_search trigger so we can use enum in the part of PKs
     my $terms = $obj->primary_key_to_terms;
 
-    my $class = ref $obj;
     $terms ||= {};
-    $class->call_trigger('pre_search', $terms);
+    $obj->pre_search($terms);
 
     my $tbl = $driver->table_for($obj);
-    my $stmt = $driver->prepare_statement($class, $terms, { limit => 1 });
+    my $stmt = $driver->prepare_statement($ds, $terms, { limit => 1 });
     my $sql = "SELECT 1 FROM $tbl\n";
     $sql .= $stmt->as_sql_where;
     my $dbh = $driver->r_handle($obj->properties->{db});
@@ -501,7 +499,7 @@ sub remove {
 
     ## Use a duplicate so the pre_save trigger can modify it.
     my $obj = $orig_obj->clone_all;
-    $obj->call_trigger('pre_remove', $orig_obj);
+    $obj->pre_remove($orig_obj);
 
     my $tbl = $driver->table_for($obj);
     my $sql = "DELETE FROM $tbl\n";
@@ -514,7 +512,7 @@ sub remove {
     _close_sth($sth);
     $driver->end_query($sth);
 
-    $obj->call_trigger('post_remove', $orig_obj);
+    $obj->post_remove($orig_obj);
 
     $orig_obj->{__is_stored} = 1;
     return $result;
@@ -643,7 +641,7 @@ sub DESTROY {
     my $driver = shift;
     ## Don't take the responsability of disconnecting this handler
     ## if we haven't created it ourself.
-    return unless $driver->{__dbh_init_by_driver};
+    return unless $driver->__dbh_init_by_driver;
     if (my $dbh = $driver->dbh) {
         $dbh->disconnect if $dbh;
     }
