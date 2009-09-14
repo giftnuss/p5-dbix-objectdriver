@@ -1,6 +1,6 @@
 # $Id$
 
-package Data::ObjectDriver::BaseObject;
+package DBIx::ObjectDriver::BaseObject;
 use strict;
 use warnings;
 
@@ -19,7 +19,7 @@ sub call_trigger
     ; $self->$trigger(@args)
     }
 
-use Data::ObjectDriver::ResultSet;
+use DBIx::ObjectDriver::ResultSet;
 
 ## Global Transaction variables
 our @WorkingDrivers;
@@ -34,12 +34,11 @@ use HO::class
     _rw => _trigger => 'trigger'
     ;
 
-use HO::abstract method => qw/install_properties/;
 use Data::Dumper;
 
 sub init {
     my $self = shift;
-    $self->_install_properties($self->install_properties);
+    $self->_install_properties($self->class_properties);
 
     while (@_) {
         my $field = shift;
@@ -49,9 +48,28 @@ sub init {
     return $self;
 }
 
+# copy constructor
+sub create {
+    my $self = shift;
+    my $new = $self->new;
+
+    $new->properties = $self->properties;
+
+    while (@_) {
+        my $field = shift;
+        my $val   = shift;
+        $self->$field($val);
+    }
+    #$new->_trigger()
+    return $new;
+}
+
+sub class_properties { return {} }
+sub install_properties { return shift()->_install_properties(@_) }
+
 sub _install_properties {
     my $self = shift;
-    my($props) = @_;
+    my($props) = (@_,{});
 
     my $columns = delete $props->{columns} || [];
     $props->{columns} = [];
@@ -282,7 +300,7 @@ sub primary_key_tuple {
 sub primary_key {
     my $obj = shift;
     my $pk = $obj->primary_key_tuple;
-    my @val = map { $obj->$_() }  @$pk;
+    my @val = map { my $m = "$_"; $obj->$_() }  @$pk;
     @val == 1 ? $val[0] : \@val;
 }
 
@@ -397,7 +415,7 @@ sub clone {
 
 sub clone_all {
     my $obj = shift;
-    my $clone = ref($obj)->new();
+    my $clone = $obj->create();
     $clone->set_values_internal($obj->column_values);
     $clone->_changed_cols({%{$obj->_changed_cols}});
     $clone;
@@ -503,7 +521,7 @@ sub result {
     my $class = shift;
     my ($terms, $args) = @_;
 
-    return Data::ObjectDriver::ResultSet->new({
+    return DBIx::ObjectDriver::ResultSet->new({
                           class     => (ref $class || $class),
                           page_size => delete $args->{page_size},
                           paging    => delete $args->{no_paging},
@@ -513,38 +531,27 @@ sub result {
 }
 
 sub search {
-    my $class = shift;
-    my($terms, $args) = @_;
-    my $driver = $class->driver;
-    if (wantarray) {
-        my @objs = $driver->search($class, $terms, $args);
+    my $self = shift;
+    my ($rec, $terms, $args) = @_;
 
-        ## Don't attempt to cache objects where the caller specified fetchonly,
-        ## because they won't be complete.
-        ## Also skip this step if we don't get any objects back from the search
-        if (!$args->{fetchonly} || !@objs) {
-            for my $obj (@objs) {
-                $driver->cache_object($obj) if $obj;
-            }
+    my $driver = $self->driver;
+
+    my $iter = $driver->search($self, $rec, $terms, $args);
+
+    return $iter if $args->{fetchonly};
+
+    my $caching_iter = sub {
+        my $d = $driver;
+
+        my $o = $iter->();
+        unless ($o) {
+            $iter->end;
+            return;
         }
-        return @objs;
-    } else {
-        my $iter = $driver->search($class, $terms, $args);
-        return $iter if $args->{fetchonly};
-
-        my $caching_iter = sub {
-            my $d = $driver;
-
-            my $o = $iter->();
-            unless ($o) {
-                $iter->end;
-                return;
-            }
-            $driver->cache_object($o);
-            return $o;
-        };
-        return Data::ObjectDriver::Iterator->new($caching_iter, sub { $iter->end });
-    }
+        $driver->cache_object($o);
+        return $o;
+    };
+    return DBIx::ObjectDriver::Iterator->new($caching_iter, sub { $iter->end });
 }
 
 sub remove         { shift->_proxy( 'remove',         @_ ) }
