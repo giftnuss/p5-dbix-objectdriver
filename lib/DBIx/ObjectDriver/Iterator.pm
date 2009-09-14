@@ -5,6 +5,18 @@ use warnings;
 
 my %Iterators = ();
 
+use overload
+    '@{}' => sub {
+        my $self = shift;
+        my @objs = ();
+
+        while (my $obj = $self->()) {
+            push @objs, $obj;
+        }
+        return @objs;
+    },
+    fallback => 1;
+
 sub new {
     my $class = shift;
     my( $each, $end ) = @_;
