@@ -367,7 +367,8 @@ sub _insert_or_replace {
             $cols = [ grep !$pk{$_} || defined $obj->$_(), @$cols ];
         }
     }
-    my $tbl = $driver->table_for($obj);
+    my $tbl = $driver->table_for($obj) or
+         Carp::croak("No table name found for given datasource.");
     my $sql = "$INSERT_OR_REPLACE INTO $tbl\n";
     my $dbd = $driver->dbd;
     $sql .= '(' . join(', ',
