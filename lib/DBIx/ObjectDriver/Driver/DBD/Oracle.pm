@@ -1,14 +1,14 @@
 # $Id$
 # Contributor(s): Xiaoou Wu <xiaoou.wu@oracle.com>
 #
-package Data::ObjectDriver::Driver::DBD::Oracle;
+package DBIx::ObjectDriver::Driver::DBD::Oracle;
 
 use strict;
 
-use base qw( Data::ObjectDriver::Driver::DBD );
+use base qw( DBIx::ObjectDriver::Driver::DBD );
 
-use Data::ObjectDriver::SQL::Oracle;
-use Data::ObjectDriver::Errors;
+use DBIx::ObjectDriver::SQL::Oracle;
+use DBIx::ObjectDriver::Errors;
 use DBD::Oracle qw(:ora_types);
 
 sub init_dbh {
@@ -82,9 +82,9 @@ sub bulk_insert {
 }
 
 ##
-sub sql_class { 'Data::ObjectDriver::SQL::Oracle' }
+sub sql_class { 'DBIx::ObjectDriver::SQL::Oracle' }
 
-package Data::ObjectDriver::Driver::DBD::Oracle::db;
+package DBIx::ObjectDriver::Driver::DBD::Oracle::db;
 
 use strict;
 

@@ -1,12 +1,12 @@
 # $Id$
 
-package Data::ObjectDriver::Driver::DBD::mysql;
+package DBIx::ObjectDriver::Driver::DBD::mysql;
 use strict;
 use warnings;
-use base qw( Data::ObjectDriver::Driver::DBD );
+use base qw( DBIx::ObjectDriver::Driver::DBD );
 
 use Carp qw( croak );
-use Data::ObjectDriver::Errors;
+use DBIx::ObjectDriver::Errors;
 
 use constant ERROR_MAP => {
     1062 => Data::ObjectDriver::Errors->UNIQUE_CONSTRAINT,

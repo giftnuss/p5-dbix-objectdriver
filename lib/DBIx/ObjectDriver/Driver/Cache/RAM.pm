@@ -1,10 +1,10 @@
 # $Id$
 
-package Data::ObjectDriver::Driver::Cache::RAM;
+package DBIx::ObjectDriver::Driver::Cache::RAM;
 use strict;
 use warnings;
 
-use base qw( Data::ObjectDriver::Driver::BaseCache );
+use base qw( DBIx::ObjectDriver::Driver::BaseCache );
 
 my %Cache;
 

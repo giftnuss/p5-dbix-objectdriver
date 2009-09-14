@@ -1,10 +1,10 @@
 # $Id$
 
-package Data::ObjectDriver::Driver::Cache::Cache;
+package DBIx::ObjectDriver::Driver::Cache::Cache;
 use strict;
 use warnings;
 
-use base qw( Data::ObjectDriver::Driver::BaseCache );
+use base qw( DBIx::ObjectDriver::Driver::BaseCache );
 
 sub deflate {
     my $driver = shift;

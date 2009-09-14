@@ -1,9 +1,9 @@
-package Data::ObjectDriver::Driver::GearmanDBI;
+package DBIx::ObjectDriver::Driver::GearmanDBI;
 use strict;
 use warnings;
 
-use base qw( Data::ObjectDriver );
-use Data::ObjectDriver::Iterator;
+use base qw( DBIx::ObjectDriver );
+use DBIx::ObjectDriver::Iterator;
 use Storable();
 use Digest::MD5;
 use Data::Dumper;
@@ -57,7 +57,7 @@ sub search {
 
     return wantarray
             ? @objs
-            : Data::ObjectDriver::Iterator->new( sub { shift @objs } );
+            : DBIx::ObjectDriver::Iterator->new( sub { shift @objs } );
 }
 
 sub _gearman_search {

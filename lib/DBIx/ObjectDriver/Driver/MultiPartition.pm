@@ -1,6 +1,6 @@
-package Data::ObjectDriver::Driver::MultiPartition;
+package DBIx::ObjectDriver::Driver::MultiPartition;
 use strict;
-use base qw( Data::ObjectDriver );
+use base qw( DBIx::ObjectDriver );
 
 __PACKAGE__->mk_accessors(qw( partitions ));
 
