@@ -1,4 +1,4 @@
-package Data::ObjectDriver::Iterator;
+package DBIx::ObjectDriver::Iterator;
 
 use strict;
 use warnings;

@@ -1,14 +1,14 @@
 # $Id$
 # Contributor(s): Xiaoou Wu <xiaoou.wu@oracle.com>
 #
-package Data::ObjectDriver::SQL::Oracle;
+package DBIx::ObjectDriver::SQL::Oracle;
 
 use strict;
 use base qw(Data::ObjectDriver::SQL);
 
 ## Oracle doesn't have the LIMIT clause.
 sub as_limit {
-    return;
+    return '';
 }
 
 ## Override as_sql to emulate the LIMIT clause.
