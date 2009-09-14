@@ -4,8 +4,6 @@ package DBIx::ObjectDriver::Driver::DBI;
 use strict;
 use warnings;
 
-use base qw( Data::ObjectDriver Class::Accessor::Fast );
-
 use DBI;
 use Carp ();
 use DBIx::ObjectDriver::Errors;
@@ -13,7 +11,19 @@ use DBIx::ObjectDriver::SQL;
 use DBIx::ObjectDriver::Driver::DBD;
 use DBIx::ObjectDriver::Iterator;
 
-__PACKAGE__->mk_accessors(qw( dsn username password connect_options dbh get_dbh dbd prefix reuse_dbh force_no_prepared_cache));
+use base qw( DBIx::ObjectDriver );
+use HO::class
+    _rw => dsn => '$',
+    _rw => username => '$',
+    _rw => password => '$',
+    _rw => connect_options => '$',
+    _rw => dbh => '$',
+    _rw => get_dbh => '$',
+    _rw => dbd => '$',
+    _rw => prefix => '$',
+    _rw => reuse_dbh => '$',
+    _rw => force_no_prepared_cache => '$',
+    _lvalue => __dbh_init_by_driver => '$';
 
 
 sub init {
@@ -58,7 +68,8 @@ sub _prepare_cached {
     my $driver = shift;
     my $dbh    = shift;
     my $sql    = shift;
-    return ($driver->dbd->can_prepare_cached_statements)? $dbh->prepare_cached($sql) : $dbh->prepare($sql);
+    return ($driver->dbd->can_prepare_cached_statements) ?
+        $dbh->prepare_cached($sql) : $dbh->prepare($sql);
 }
 
 my %Handles;
@@ -83,7 +94,7 @@ sub init_db {
         $Handles{$driver->dsn} = $dbh;
     }
     $driver->dbd->init_dbh($dbh);
-    $driver->{__dbh_init_by_driver} = 1;
+    $driver->__dbh_init_by_driver = 1;
     return $dbh;
 }
 
@@ -125,7 +136,7 @@ sub prepare_fetch {
     ## Use (shallow) duplicates so the pre_search trigger can modify them.
     my $terms = defined $orig_terms ? ( ref $orig_terms eq 'ARRAY' ? [ @$orig_terms ] : { %$orig_terms } ) : {};
     my $args  = defined $orig_args  ? { %$orig_args  } : {};
-    $class->call_trigger('pre_search', $terms, $args);
+    $class->pre_search($terms, $args);
 
     my $stmt = $driver->prepare_statement($class, $terms, $args);
 
