@@ -1,10 +1,10 @@
 # $Id$
 
-package Data::ObjectDriver::Driver::DBD::Pg;
+package DBIx::ObjectDriver::Driver::DBD::Pg;
 use strict;
 use warnings;
 
-use base qw( Data::ObjectDriver::Driver::DBD );
+use base qw( DBIx::ObjectDriver::Driver::DBD );
 
 # No postgresql doesn't allow MySQL's REPLACE INTO syntax 
 sub can_replace { 0 }

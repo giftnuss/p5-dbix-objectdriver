@@ -1,10 +1,10 @@
 # $Id$
 
-package Data::ObjectDriver::BaseView;
+package DBIx::ObjectDriver::BaseView;
 use strict;
 use warnings;
 
-use base qw( Data::ObjectDriver::BaseObject );
+use base qw( DBIx::ObjectDriver::BaseObject );
 
 use Carp ();
 use Storable;

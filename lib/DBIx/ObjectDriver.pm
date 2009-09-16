@@ -1,27 +1,42 @@
 # $Id$
 
 package DBIx::ObjectDriver;
-use strict;
-use warnings;
-use Class::Accessor::Fast;
+use strict; use warnings; use utf8;
 
-use base qw( Class::Accessor::Fast );
+use Carp ();
+
+use subs qw/init/;
+
+use HO::class
+    _rw => pk_generator => '$',
+    _rw => txn_active => '$',
+    _rw => record_map => '%';
+
+# public setter
+sub with {
+    my ($self,$symbol,$creator) = @_;
+    my $r;
+    $symbol = $symbol->() if ref $symbol;
+    unless(ref($creator) eq 'CODE' && 
+           ($r = $creator->()) && $r->isa('DBIx::ObjectDriver::Record')) {
+        Carp::croak ('Not a code ref for creating record objects.')
+    }
+
+    $self->record_map($symbol => $creator)
+}
+# protected getter
+sub _with {
+    my ($self,$symbol) = @_;
+    return $self->record_map($symbol)
+}
+
 use DBIx::ObjectDriver::Iterator;
-
-__PACKAGE__->mk_accessors(qw( pk_generator txn_active ));
 
 our $VERSION = '0.06';
 our $DEBUG = $ENV{DOD_DEBUG} || 0;
 our $PROFILE = $ENV{DOD_PROFILE} || 0;
 our $PROFILER;
 our $LOGGER;
-
-sub new {
-    my $class = shift;
-    my $driver = bless {}, $class;
-    $driver->init(@_);
-    $driver;
-}
 
 sub logger {
     my $class = shift;

@@ -1,6 +1,6 @@
 # $Id$
 
-package Data::ObjectDriver::Errors;
+package DBIx::ObjectDriver::Errors;
 use strict;
 use warnings;
 

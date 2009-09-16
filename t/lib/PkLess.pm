@@ -3,15 +3,17 @@
 use strict;
 
 package PkLess;
-use base qw/Data::ObjectDriver::BaseObject/;
+use base qw/DBIx::ObjectDriver::BaseObject/;
 
-use Data::ObjectDriver::Driver::DBI;
+use DBIx::ObjectDriver::Driver::DBI;
 
-__PACKAGE__->install_properties({
+sub class_properties {{
     columns => [ 'anything' ],
     datasource => 'pkless',
     primary_key =>  [ ], # proper way to skip pk (for now XXX)
-    driver => Data::ObjectDriver::Driver::DBI->new(
+    driver => DBIx::ObjectDriver::Driver::DBI->new(
         dsn      => 'dbi:SQLite:dbname=global.db',
     ),
-});
+}}
+
+1;

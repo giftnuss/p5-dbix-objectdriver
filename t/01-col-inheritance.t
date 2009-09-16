@@ -21,6 +21,7 @@ setup_dbs({
 use Wine;
 
 my $wine = Wine->new;
+
 my %expected = map { $_ => 1 } qw(name rating id cluster_id content binchar); 
 my %data;
 # I know about Test::Deep. Do not ask...
@@ -31,11 +32,19 @@ for my $col (@{ $wine->column_names }) {
 for my $col (keys %expected) {
     ok $data{$col}, "expected column $col is present"; 
 }
+
 $wine->name("Saumur Champigny, Le Grand Clos 2001");
 $wine->rating(4);
+
 ok($wine->save, 'Object saved successfully');
 
-ok ($wine->has_column("id")) ;
-ok ($wine->has_column("rating")) ;
+my $id = $wine->id;
+ok($id > 0,'new pk > 0');
+
+my $obj = $wine->lookup($id);
+print Dumper($obj);
+
+ok ($wine->has_column("id"));
+ok ($wine->has_column("rating"));
 
 sub DESTROY { teardown_dbs(qw( global )); }

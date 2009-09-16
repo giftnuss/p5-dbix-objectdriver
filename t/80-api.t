@@ -6,20 +6,20 @@ BEGIN: {
    use Test::More $@ ? (skip_all => 'Test::ClassAPI not installed.') : (); 
 };
 
-use Data::ObjectDriver;
-use Data::ObjectDriver::Driver::DBI;
-use Data::ObjectDriver::SQL;
-use Data::ObjectDriver::BaseObject;
+use DBIx::ObjectDriver;
+use DBIx::ObjectDriver::Driver::DBI;
+use DBIx::ObjectDriver::SQL;
+use DBIx::ObjectDriver::BaseObject;
 
 Test::ClassAPI->execute('complete') unless $@;
 
 __DATA__
-   
+
 Class::Accessor::Fast   = interface
-Data::ObjectDriver      = class
-Data::ObjectDriver::Driver::DBI = class
-Data::ObjectDriver::SQL = class
-Data::ObjectDriver::BaseObject = class
+DBIx::ObjectDriver      = class
+DBIx::ObjectDriver::Driver::DBI = class
+DBIx::ObjectDriver::SQL = class
+DBIx::ObjectDriver::BaseObject = class
 
 [Class::Accessor::Fast]
 new                             = method
@@ -38,11 +38,13 @@ get                             = method
 set                             = method
 subname                         = method
 
-[Data::ObjectDriver]
+[DBIx::ObjectDriver]
 Class::Accessor::Fast = implements
 new                   = method
 begin_work            = method
+cache_object          = method
 commit                = method
+debug                 = method
 init                  = method
 cache_object          = method
 debug                 = method
@@ -57,7 +59,7 @@ start_query           = method
 txn_active            = method
 uncache_object        = method
 
-[Data::ObjectDriver::Driver::DBI]
+[DBIx::ObjectDriver::Driver::DBI]
 begin_work  = method
 bulk_insert = method
 commit      = method
@@ -76,7 +78,7 @@ init_db     = method
 insert      = method
 last_error  = method
 load_object_from_rec = method
-logger      = method
+# logger      = method
 lookup      = method
 lookup_multi = method
 password    = method
@@ -87,6 +89,7 @@ r_handle    = method
 remove      = method
 replace     = method
 reuse_dbh   = method
+rollback    = method
 rw_handle   = method
 search      = method
 select_one  = method
@@ -96,7 +99,7 @@ update      = method
 username    = method
 
 
-[Data::ObjectDriver::SQL]
+[DBIx::ObjectDriver::SQL]
 Class::Accessor::Fast = implements
 add_complex_where     = method
 add_having    = method
@@ -129,13 +132,14 @@ subname            = method
 where         = method
 where_values  = method
 
-[Data::ObjectDriver::BaseObject]
+[DBIx::ObjectDriver::BaseObject]
 # add_trigger   = method
 begin_work      = method
 bulk_insert   = method
 call_trigger  = method
 changed_cols  = method
 changed_cols_and_pk = method
+class_properties    = method
 clone         = method
 clone_all     = method
 column        = method
@@ -179,15 +183,21 @@ remove        = method
 replace       = method
 reset_changed_cols = method
 result        = method
+rollback      = method
 save          = method
 search        = method
 set_values    = method
 set_values_internal = method
+txn_active    = method
+txn_debug     = method
+uncache_object = method
 update        = method
 weaken        = method
 
+# Development
+Dumper        = method
 # TRIGGER
-trigger      = method
+# _trigger      = method
 post_inflate = method
 post_insert  = method
 post_load    = method

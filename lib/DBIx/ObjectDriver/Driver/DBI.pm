@@ -283,19 +283,19 @@ sub table_for {
 sub exists {
     my $driver = shift;
     my($ds) = @_;
-    return unless $obj->has_primary_key;
+    return unless $ds->has_primary_key;
 
     ## should call pre_search trigger so we can use enum in the part of PKs
-    my $terms = $obj->primary_key_to_terms;
+    my $terms = $ds->primary_key_to_terms;
 
     $terms ||= {};
-    $obj->pre_search($terms);
+    $ds->pre_search($terms);
 
-    my $tbl = $driver->table_for($obj);
+    my $tbl = $driver->table_for($ds);
     my $stmt = $driver->prepare_statement($ds, $terms, { limit => 1 });
     my $sql = "SELECT 1 FROM $tbl\n";
     $sql .= $stmt->as_sql_where;
-    my $dbh = $driver->r_handle($obj->properties->{db});
+    my $dbh = $driver->r_handle($ds->properties->{db});
     $driver->start_query($sql, $stmt->{bind});
     my $sth = $driver->_prepare_cached($dbh, $sql);
     $sth->execute(@{ $stmt->{bind} });

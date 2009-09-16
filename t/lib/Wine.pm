@@ -3,30 +3,31 @@
 use strict;
 
 package My::BaseObject;
-use base qw/Data::ObjectDriver::BaseObject/;
+use base qw/DBIx::ObjectDriver::BaseObject/;
 
-sub _install_properties {
+sub class_properties {
     my $this = shift;
-    my $props = $this->SUPER::_install_properties(@_);
-    $this->install_column('rating');
+    my $props = shift;
+    push @{$props->{'columns'}}, 'rating';
     return $props;
 }
 
 package Wine;
 use base qw( My::BaseObject );
 
-use Data::ObjectDriver::Driver::DBI;
+use DBIx::ObjectDriver::Driver::DBI;
 
-sub install_properties {{
+sub class_properties {
+    shift()->SUPER::class_properties({
     # rating is defined on the fly in My::BaseObject 
     columns => [ 'id', 'cluster_id', 'name', 'content', 'binchar'],
     datasource => 'wines',
     primary_key => 'id',
     column_defs => { content => 'blob', binchar => 'binchar' },
-    driver => Data::ObjectDriver::Driver::DBI->new(
+    driver => DBIx::ObjectDriver::Driver::DBI->new(
         dsn      => 'dbi:SQLite:dbname=global.db',
     ),
-}};
+})}
 
 sub insert {
     my $obj = shift;
