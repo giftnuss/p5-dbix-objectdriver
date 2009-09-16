@@ -3,6 +3,8 @@
 use strict;
 
 use lib 't/lib';
+use lib '../p5-ho-class/lib';
+use lib '../p5-ho-trigger/lib';
 
 require 't/lib/db-common.pl';
 
