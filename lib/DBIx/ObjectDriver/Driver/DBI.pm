@@ -159,7 +159,11 @@ sub fetch {
     my @bind;
     my $map = $stmt->select_map;
 
-    for my $col (@{ $stmt->select }) {
+    my @columns = @{$stmt->select};
+    $rec->used_columns([]);
+
+    for my $col (@columns) {
+        $rec->used_columns('>',$map->{$col});
         push @bind, $rec->get_slot($map->{$col});
     }
 
@@ -188,7 +192,7 @@ sub load_object_from_rec {
     my ($ds, $rec, $no_triggers) = @_;
 
     my $obj = $ds->create;
-    $obj->set_values_internal($rec);
+    $obj->set_record_values($rec);
     ## Don't need a duplicate as there's no previous version in memory
     ## to preserve.
     $obj->__is_stored = 1;
@@ -225,11 +229,11 @@ sub search {
 
 sub lookup {
     my $driver = shift;
-    my($class, $id) = @_;
+    my($ds, $rec, $id) = @_;
     return unless defined $id;
-    my @obj = $driver->search($class,
-        $class->primary_key_to_terms($id), { limit => 1 , is_pk => 1 });
-    $obj[0];
+    my $it = $driver->search($ds, $rec,
+        $ds->primary_key_to_terms($id), { limit => 1 , is_pk => 1 });
+    $it->next;
 }
 
 sub lookup_multi {

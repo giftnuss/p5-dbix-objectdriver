@@ -12,7 +12,7 @@ use Test::More;
 unless (eval { require DBD::SQLite }) {
     plan skip_all => 'Tests require DBD::SQLite';
 }
-plan tests => 15;
+plan tests => 17;
 
 setup_dbs({
     global => [ qw( wines ) ],
@@ -42,7 +42,7 @@ my $id = $wine->id;
 ok($id > 0,'new pk > 0');
 
 my $obj = $wine->lookup($id);
-print Dumper($obj);
+isa_ok($obj,'DBIx::ObjectDriver::Record::Auto');
 
 ok ($wine->has_column("id"));
 ok ($wine->has_column("rating"));

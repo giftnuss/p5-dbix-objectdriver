@@ -5,14 +5,14 @@ use base 'DBIx::ObjectDriver::Record';
 
 # reserved words
 use constant COLUMN_NAMES => 0;
-use constant COLUMN_STARTCOUNT => 1;
+use constant COLUMN_STARTCOUNT => 2;
 
 my %columns;
 
 sub new {
     my ($self,$cols) = @_;
     my $class = ref $self || $self;
-    return bless [ $cols ], $class
+    return bless [ $cols , []], $class
 }
 
 sub add_accessor {

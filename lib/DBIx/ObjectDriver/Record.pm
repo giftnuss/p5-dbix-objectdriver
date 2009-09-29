@@ -11,7 +11,9 @@ use strict; use warnings; use utf8;
 # =========================
 use subs qw/init/;
 use HO::class
-    init => 'hash';
+    init => 'hash',
+    _rw => used_columns => '@';
+
 
 1;
 

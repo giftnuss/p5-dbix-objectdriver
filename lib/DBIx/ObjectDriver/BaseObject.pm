@@ -13,13 +13,9 @@ use Carp ();
 use HO::Trigger qw( pre_save post_save post_load pre_search
                      pre_insert post_insert pre_update post_update
                      pre_remove post_remove post_inflate );
-sub call_trigger 
-    { my ($self,$trigger,@args) = @_
-    ; warn "CALL $trigger: " . join ' ',caller
-    ; $self->$trigger(@args)
-    }
 
 use DBIx::ObjectDriver::ResultSet;
+use DBIx::ObjectDriver::Record::Auto;
 
 ## Global Transaction variables
 our @WorkingDrivers;
@@ -391,7 +387,7 @@ sub set_values {
     }
 }
 
-sub set_values_internal {
+sub _set_values_internal {
     my $obj = shift;
     my $values = shift;
     for my $col (keys %$values) {
@@ -401,6 +397,14 @@ sub set_values_internal {
         #}
 
         $obj->column_values->{$col} = $values->{$col};
+    }
+}
+
+sub set_record_values {
+    my $obj = shift;
+    my $rec = shift;
+    for my $col ($rec->used_columns) {
+        $obj->column_values->{$col} = $rec->$col;
     }
 }
 
@@ -416,7 +420,7 @@ sub clone {
 sub clone_all {
     my $obj = shift;
     my $clone = $obj->create();
-    $clone->set_values_internal($obj->column_values);
+    $clone->_set_values_internal($obj->column_values);
     $clone->_changed_cols({%{$obj->_changed_cols}});
     $clone;
 }
@@ -499,14 +503,6 @@ sub bulk_insert {
     return $driver->bulk_insert($class, @_);
 }
 
-sub lookup {
-    my $self = shift;
-    my $driver = $self->driver;
-    my $obj = $driver->lookup($self, @_) or return;
-    $driver->cache_object($obj);
-    $obj;
-}
-
 sub lookup_multi {
     my $class = shift;
     my $driver = $class->driver;
@@ -532,7 +528,8 @@ sub result {
 
 sub search {
     my $self = shift;
-    my ($rec, $terms, $args) = @_;
+    my ($terms, $args) = (@_,{});
+    my $rec = delete $args->{'record'} || $self->record;
 
     my $driver = $self->driver;
 
@@ -554,6 +551,15 @@ sub search {
     return DBIx::ObjectDriver::Iterator->new($caching_iter, sub { $iter->end });
 }
 
+sub lookup {
+    my $self = shift;
+    my $driver = $self->driver;
+    unshift @_, $self->record unless @_ > 1;
+    my $obj = $driver->lookup($self, @_) or return;
+    $driver->cache_object($obj);
+    $obj;
+}
+
 sub remove         { shift->_proxy( 'remove',         @_ ) }
 sub update         { shift->_proxy( 'update',         @_ ) }
 sub insert         { shift->_proxy( 'insert',         @_ ) }
@@ -565,7 +571,7 @@ sub refresh {
     my $obj = shift;
     return unless $obj->has_primary_key;
     my $fields = $obj->fetch_data;
-    $obj->set_values_internal($fields);
+    $obj->_set_values_internal($fields);
     $obj->post_load;
     $obj->driver->cache_object($obj);
     return 1;
@@ -584,6 +590,13 @@ sub _proxy {
         push @WorkingDrivers, $driver;
     }
     $driver->$meth($obj, @args);
+}
+
+## Record
+sub record {
+    my $self = shift;
+    return DBIx::ObjectDriver::Record::Auto->get_for_class(ref($self),
+        $self->properties->{columns});
 }
 
 sub txn_active { $TransactionLevel }
@@ -918,9 +931,8 @@ C<primary_key> property.
 =head2 C<Class-E<gt>search(\%terms, [\%args])>
 
 Returns all instances of C<Class> that match the values specified in
-C<\%terms>, keyed on column names. In list context, C<search> returns the
-objects containing those values. In scalar context, C<search> returns an
-iterator function containing the same set of objects.
+C<\%terms>, keyed on column names. This method returns an iterator object 
+containing the set of objects.
 
 Your search can be customized with parameters specified in C<\%args>. Commonly
 recognized parameters (those implemented by the standard C<Data::ObjectDriver>
@@ -1101,7 +1113,7 @@ way in C<Class>'s C<column_defs> property.
 Sets all the columns of C<$obj> that are members of C<\%values> to the values
 specified there.
 
-=head2 C<$obj-E<gt>set_values_internal(\%values)>
+=head2 C<$obj-E<gt>_set_values_internal(\%values)>
 
 Sets new specified values of C<$obj>, without using any overridden mutator
 methods of C<$obj> and without marking the changed columns changed.
