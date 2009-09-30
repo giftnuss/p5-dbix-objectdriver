@@ -117,12 +117,11 @@ sub rw_handle {
 
 sub fetch_data {
     my $driver = shift;
-    my($obj) = @_;
+    my($obj, $rec) = @_;
     return unless $obj->has_primary_key;
     my $terms = $obj->primary_key_to_terms;
     my $args  = { limit => 1 };
-    my $rec = {};
-    my $sth = $driver->fetch($rec, $obj, $terms, $args);
+    my $sth = $driver->fetch($obj, $rec, $terms, $args);
     $sth->fetch;
     _close_sth($sth);
     $driver->end_query($sth);
@@ -131,14 +130,14 @@ sub fetch_data {
 
 sub prepare_fetch {
     my $driver = shift;
-    my($class, $orig_terms, $orig_args) = @_;
+    my($obj, $orig_terms, $orig_args) = @_;
 
     ## Use (shallow) duplicates so the pre_search trigger can modify them.
     my $terms = defined $orig_terms ? ( ref $orig_terms eq 'ARRAY' ? [ @$orig_terms ] : { %$orig_terms } ) : {};
     my $args  = defined $orig_args  ? { %$orig_args  } : {};
-    $class->pre_search($terms, $args);
+    $obj->pre_search($terms, $args);
 
-    my $stmt = $driver->prepare_statement($class, $terms, $args);
+    my $stmt = $driver->prepare_statement($obj, $terms, $args);
 
     my $sql = $stmt->as_sql;
     $sql .= "\nFOR UPDATE" if $orig_args->{for_update};
@@ -238,19 +237,22 @@ sub lookup {
 
 sub lookup_multi {
     my $driver = shift;
-    my($class, $ids) = @_;
+    my($obj, $rec, $ids) = @_;
     return [] unless @$ids;
     my @got;
     ## If it's a single-column PK, assume it's in one partition, and
     ## use an OR search. FIXME: can we instead check for partitioning?
     unless (ref($ids->[0])) {
-        my $terms = $class->primary_key_to_terms([ $ids ]);
-        my @sqlgot = $driver->search($class, $terms, { is_pk => 1 });
-        my %hgot = map { $_->primary_key() => $_ } @sqlgot;
+        my $terms = $obj->primary_key_to_terms([ $ids ]);
+        my $iter = $driver->search($obj, $rec, $terms, { is_pk => 1 });
+        my %hgot;
+        while(my $sqlgot = $iter->next) {
+            $hgot{$sqlgot->primary_key()} = $sqlgot;
+        }
         @got = map { defined $_ ? $hgot{$_} : undef } @$ids;
     } else {
         for my $id (@$ids) {
-            push @got, eval{ $class->driver->lookup($class, $id) };
+            push @got, eval{ $obj->driver->lookup($obj, $rec, $id) };
         }
     }
     \@got;
@@ -423,8 +425,8 @@ sub update {
 
     ## Use a duplicate so the pre_save trigger can modify it.
     my $obj = $orig_obj->clone_all;
-    $obj->call_trigger('pre_save', $orig_obj);
-    $obj->call_trigger('pre_update', $orig_obj);
+    $obj->pre_save($orig_obj);
+    $obj->pre_update($orig_obj);
 
     my $cols = $obj->column_names;
     my @changed_cols = $obj->changed_cols;
@@ -443,14 +445,14 @@ sub update {
     $sql .= join(', ',
             map { $dbd->db_column_name($tbl, $_) . " = ?" }
             @changed_cols) . "\n";
-    my $stmt = $driver->prepare_statement(ref($obj), {
+    my $stmt = $driver->prepare_statement($obj, {
             %{ $obj->primary_key_to_terms },
             %{ $terms || {} }
         });
     $sql .= $stmt->as_sql_where;
 
     my $dbh = $driver->rw_handle($obj->properties->{db});
-    $driver->start_query($sql, $obj->{column_values});
+    $driver->start_query($sql, scalar $obj->column_values);
     my $sth = $driver->_prepare_cached($dbh, $sql);
     my $i = 1;
     my $col_defs = $obj->properties->{column_defs};
@@ -470,35 +472,16 @@ sub update {
     _close_sth($sth);
     $driver->end_query($sth);
 
-    $obj->call_trigger('post_save', $orig_obj);
-    $obj->call_trigger('post_update', $orig_obj);
+    $obj->post_save($orig_obj);
+    $obj->post_update($orig_obj);
 
-    $orig_obj->{changed_cols} = {};
+    $orig_obj->changed_cols({});
     return $rows;
 }
 
 sub remove {
     my $driver = shift;
     my $orig_obj = shift;
-
-    ## If remove() is called on class method and we have 'nofetch'
-    ## option, we remove the record using $term and won't create
-    ## $object. This is for efficiency and PK-less tables
-    ## Note: In this case, triggers won't be fired
-    ## Otherwise, Class->remove is a shortcut for search+remove
-    unless (ref($orig_obj)) {
-        if ($_[1] && $_[1]->{nofetch}) {
-            return $driver->direct_remove($orig_obj, @_);
-        } else {
-            my $result = 0;
-            my @obj = $driver->search($orig_obj, @_);
-            for my $obj (@obj) {
-                my $res = $obj->remove(@_) || 0;
-                $result += $res;
-            }
-            return $result || 0E0;
-        }
-    }
 
     return unless $orig_obj->has_primary_key;
 
@@ -508,7 +491,7 @@ sub remove {
 
     my $tbl = $driver->table_for($obj);
     my $sql = "DELETE FROM $tbl\n";
-    my $stmt = $driver->prepare_statement(ref($obj), $obj->primary_key_to_terms);
+    my $stmt = $driver->prepare_statement($obj, $obj->primary_key_to_terms);
     $sql .= $stmt->as_sql_where;
     my $dbh = $driver->rw_handle($obj->properties->{db});
     $driver->start_query($sql, $stmt->{bind});
@@ -519,21 +502,21 @@ sub remove {
 
     $obj->post_remove($orig_obj);
 
-    $orig_obj->{__is_stored} = 1;
+    $orig_obj->__is_stored = 1;
     return $result;
 }
 
 sub direct_remove {
     my $driver = shift;
-    my($class, $orig_terms, $orig_args) = @_;
+    my($obj, $orig_terms, $orig_args) = @_;
 
     ## Use (shallow) duplicates so the pre_search trigger can modify them.
     my $terms = defined $orig_terms ? { %$orig_terms } : {};
     my $args  = defined $orig_args  ? { %$orig_args  } : {};
-    $class->call_trigger('pre_search', $terms, $args);
+    $obj->pre_search($terms, $args);
 
-    my $stmt = $driver->prepare_statement($class, $terms, $args);
-    my $tbl  = $driver->table_for($class);
+    my $stmt = $driver->prepare_statement($obj, $terms, $args);
+    my $tbl  = $driver->table_for($obj);
     my $sql  = "DELETE from $tbl\n";
        $sql .= $stmt->as_sql_where;
 
@@ -545,7 +528,7 @@ sub direct_remove {
         $sql .= $stmt->as_limit;
     }
 
-    my $dbh = $driver->rw_handle($class->properties->{db});
+    my $dbh = $driver->rw_handle($obj->properties->{db});
     $driver->start_query($sql, $stmt->{bind});
     my $sth = $driver->_prepare_cached($dbh, $sql);
     my $result = $sth->execute(@{ $stmt->{bind} });
@@ -654,13 +637,13 @@ sub DESTROY {
 
 sub prepare_statement {
     my $driver = shift;
-    my($class, $terms, $args) = @_;
+    my($obj, $terms, $args) = @_;
 
     my $dbd = $driver->dbd;
     my $stmt = $args->{sql_statement} || $dbd->sql_class->new;
 
-    if (my $tbl = $driver->table_for($class)) {
-        my $cols = $class->column_names;
+    if (my $tbl = $driver->table_for($obj)) {
+        my $cols = $obj->column_names;
         my %fetch = $args->{fetchonly} ?
             (map { $_ => 1 } @{ $args->{fetchonly} }) : ();
         my $skip = $stmt->select_map_reverse;

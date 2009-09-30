@@ -57,6 +57,7 @@ sub create {
         $self->$field($val);
     }
     #$new->_trigger()
+    #print Dumper($new);
     return $new;
 }
 
@@ -361,7 +362,11 @@ sub has_primary_key {
     1;
 }
 
-sub datasource { $_[0]->properties->{datasource} }
+sub datasource { 
+    my $self = shift;
+    Carp::confess "Not a class method anymore." unless ref $self;
+    $self->properties->{datasource} 
+}
 
 sub columns_of_type {
     my $obj = shift;
@@ -503,16 +508,6 @@ sub bulk_insert {
     return $driver->bulk_insert($class, @_);
 }
 
-sub lookup_multi {
-    my $class = shift;
-    my $driver = $class->driver;
-    my $objs = $driver->lookup_multi($class, @_) or return;
-    for my $obj (@$objs) {
-        $driver->cache_object($obj) if $obj;
-    }
-    $objs;
-}
-
 sub result {
     my $class = shift;
     my ($terms, $args) = @_;
@@ -560,6 +555,17 @@ sub lookup {
     $obj;
 }
 
+sub lookup_multi {
+    my $self = shift;
+    my $driver = $self->driver;
+    unshift @_, $self->record unless @_ > 1;
+    my $objs = $driver->lookup_multi($self, @_) or return;
+    for my $obj (@$objs) {
+        $driver->cache_object($obj) if $obj;
+    }
+    $objs;
+}
+
 sub remove         { shift->_proxy( 'remove',         @_ ) }
 sub update         { shift->_proxy( 'update',         @_ ) }
 sub insert         { shift->_proxy( 'insert',         @_ ) }
@@ -568,10 +574,11 @@ sub fetch_data     { shift->_proxy( 'fetch_data',     @_ ) }
 sub uncache_object { shift->_proxy( 'uncache_object', @_ ) }
 
 sub refresh {
-    my $obj = shift;
+    my ($obj,$rec) = @_;
     return unless $obj->has_primary_key;
-    my $fields = $obj->fetch_data;
-    $obj->_set_values_internal($fields);
+    $rec = $obj->record unless defined $rec;
+    $rec = $obj->fetch_data($rec);
+    $obj->set_record_values($rec);
     $obj->post_load;
     $obj->driver->cache_object($obj);
     return 1;

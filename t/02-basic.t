@@ -1,14 +1,17 @@
-# $Id: 01-col-inheritance.t 989 2005-09-23 19:58:01Z btrott $
+#  -*- perl -*-
 
 use strict;
 
 use lib 't/lib';
+use lib '../p5-ho-class/lib';
+use lib '../p5-ho-trigger/lib';
 use lib 't/lib/cached';
 
 require 't/lib/db-common.pl';
 
 use Test::More;
 use Test::Exception;
+use Data::Dumper;
 
 BEGIN {
     unless (eval { require DBD::SQLite }) {
@@ -47,8 +50,8 @@ setup_dbs({
     $w1->name($old);
     ok $w1->save;
     my $id = $w1->id;
-    
-    my $w2 = Wine->lookup($id);
+
+    my $w2 = $w1->lookup($id);
     $w2->name($new);
     $w2->save;
     cmp_ok $w1->name, 'eq', $old, "Old name not updated...";
@@ -79,7 +82,7 @@ setup_dbs({
     undef $w;
 
     # lookup test
-    lives_ok { $w = Wine->lookup({ id => $id })} "Alive !";
+    lives_ok { $w = Wine->new->lookup({ id => $id })} "Alive !";
     cmp_ok $w->name, 'eq', 'Veuve Cliquot', "simple data test";
 
     ok $w;
@@ -100,7 +103,7 @@ setup_dbs({
     } else {
         @ids = reverse @ids;
     }
-    my @got = map { $_->id } @{ Wine->lookup_multi(\@ids) };
+    my @got = map { $_->id } @{ Wine->new->lookup_multi(\@ids) };
     is_deeply \@got, \@ids, "Sorted result set";
 }
 

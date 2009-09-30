@@ -1,8 +1,10 @@
 # $Id$
 
 use strict;
-use Test::More tests => 3;
+use Test::More tests => 5;
 
-use_ok('Data::ObjectDriver');
-use_ok('Data::ObjectDriver::SQL');
-use_ok('Data::ObjectDriver::BaseObject');
+use_ok('DBIx::ObjectDriver');
+use_ok('DBIx::ObjectDriver::BaseObject');
+use_ok('DBIx::ObjectDriver::SQL');
+use_ok('DBIx::ObjectDriver::Driver::DBI');
+use_ok('DBIx::ObjectDriver::Driver::DBD');
