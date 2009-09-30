@@ -4,26 +4,30 @@ package DBIx::ObjectDriver::Driver::BaseCache;
 use strict;
 use warnings;
 
-use base qw( DBIx::ObjectDriver Class::Accessor::Fast
-             Class::Data::Inheritable );
+use base qw( Class::Data::Inheritable );
 
 use Carp ();
 
-__PACKAGE__->mk_accessors(qw( cache fallback txn_buffer));
+use HO::class
+   init => 'hash',
+   _rw => cache => '$',
+   _rw => fallback => '$',
+   _rw => txn_buffer => '$';
+
 __PACKAGE__->mk_classdata(qw( Disabled ));
 
 sub deflate { $_[1] }
 sub inflate { $_[2] }
 
 # subclasses must override these:
-sub add_to_cache            { Carp::croak("NOT IMPLEMENTED") }
-sub update_cache            { Carp::croak("NOT IMPLEMENTED") }
-sub remove_from_cache       { Carp::croak("NOT IMPLEMENTED") }
-sub get_from_cache          { Carp::croak("NOT IMPLEMENTED") }
+use HO::abstract method => 
+    qw/add_to_cache
+       update_cache
+       remove_from_cache
+       get_from_cache/;
 
 sub init {
     my $driver = shift;
-    $driver->SUPER::init(@_);
     my %param = @_;
     $driver->cache($param{cache})
         or Carp::croak("cache is required");

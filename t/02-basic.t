@@ -122,12 +122,12 @@ setup_dbs({
     ok $i->save;
     my $id = $i->id;
     undef $i;
-    
+
     # lookup test
-    dies_ok  { $i = Ingredient->lookup({ id => $id, quantity => 1 })} "Use Search !";
-    lives_ok { $i = Ingredient->lookup({ id => $id, recipe_id => $rid })} "Alive";
+    dies_ok  { $i = Ingredient->new->lookup({ id => $id, quantity => 1 })} "Use Search !";
+    lives_ok { $i = Ingredient->new->lookup({ id => $id, recipe_id => $rid })} "Alive";
     cmp_ok $i->name, 'eq', 'Chouchenn', "simple data test";
-    
+
     # lookup_multi with hash (multiple pk) 
     lives_ok { $i = Ingredient->lookup_multi(
         [{ id => $id, recipe_id => $rid }])
@@ -163,11 +163,11 @@ setup_dbs({
     $r2->recipe_id($rid);
     $r2->title('new title');
     ok $r2->replace;
-    
+
     ## check
     $r = Recipe->lookup($rid);
     is $r->title, 'new title';
-    
+
     $r2 = Recipe->new;
     $r2->recipe_id($rid);
     ok $r2->replace;
@@ -196,7 +196,7 @@ setup_dbs({
     $r = Recipe->lookup($id);
     ok $r;
     is $r->title, "to replace";
-    
+
     # emulate a driver which doesn't support REPLACE INTO
     { 
         no warnings 'redefine';
@@ -260,7 +260,7 @@ setup_dbs({
     my $w3 = Wine->new;
     $w3->name("different");
     $w3->insert;
-    
+
     my $w2 = Wine->lookup($w1->id);
     ok  $w1->is_same($w1);
     ok  $w2->is_same($w1);

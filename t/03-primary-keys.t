@@ -3,6 +3,8 @@
 use strict;
 
 use lib 't/lib';
+use lib '../p5-ho-class/lib';
+use lib '../p5-ho-trigger/lib';
 use lib 't/lib/cached';
 
 require 't/lib/db-common.pl';
@@ -40,7 +42,7 @@ setup_dbs({
     my $r = Recipe->new;
     $r->save;
     ok $r->has_primary_key, "recipe has pk";;
-    
+
     my $i = Ingredient->new;
     $i->recipe_id($r->recipe_id);
     $i->save;
