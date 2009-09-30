@@ -42,9 +42,9 @@ my $id = $wine->id;
 ok($id > 0,'new pk > 0');
 
 my $obj = $wine->lookup($id);
-isa_ok($obj,'DBIx::ObjectDriver::Record::Auto');
+isa_ok($obj,'DBIx::ObjectDriver::BaseObject');
 
-ok ($wine->has_column("id"));
-ok ($wine->has_column("rating"));
+ok ($obj->id == $id,'id matches');
+ok ($obj->rating == 4,'rating matches');
 
 sub DESTROY { teardown_dbs(qw( global )); }
