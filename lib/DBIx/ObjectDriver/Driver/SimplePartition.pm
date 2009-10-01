@@ -1,7 +1,7 @@
-package Data::ObjectDriver::Driver::SimplePartition;
+package DBIx::ObjectDriver::Driver::SimplePartition;
 use strict;
 use warnings;
-use base qw( Data::ObjectDriver::Driver::Partition );
+use base qw( DBIx::ObjectDriver::Driver::Partition );
 
 use Carp qw( croak );
 use Data::Dumper;

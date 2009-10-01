@@ -602,7 +602,8 @@ sub _proxy {
 ## Record
 sub record {
     my $self = shift;
-    return DBIx::ObjectDriver::Record::Auto->get_for_class(ref($self),
+    my $class = join('::',ref($self),$self->datasource);
+    return DBIx::ObjectDriver::Record::Auto->get_for_class($class,
         $self->properties->{columns});
 }
 

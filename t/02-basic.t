@@ -129,7 +129,7 @@ setup_dbs({
     cmp_ok $i->name, 'eq', 'Chouchenn', "simple data test";
 
     # lookup_multi with hash (multiple pk) 
-    lives_ok { $i = Ingredient->lookup_multi(
+    lives_ok { $i = Ingredient->new->lookup_multi(
         [{ id => $id, recipe_id => $rid }])
     } "Alive";
     is scalar @$i, 1;
@@ -142,7 +142,7 @@ setup_dbs({
     );
     $i2->save;
     my $id2 = $i2->id;
-    lives_ok { $i = Ingredient->lookup_multi(
+    lives_ok { $i = Ingredient->new->lookup_multi(
         [{ id => $id, recipe_id => $rid }, { id => $id2, recipe_id => $rid } ])
     } "Alive";
     is scalar @$i, 2;

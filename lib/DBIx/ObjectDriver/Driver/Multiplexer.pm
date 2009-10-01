@@ -1,14 +1,17 @@
 # $Id$
 
-package Data::ObjectDriver::Driver::Multiplexer;
+package DBIx::ObjectDriver::Driver::Multiplexer;
 use strict;
 use warnings;
 
 use Storable();
 
-use base qw( Data::ObjectDriver Class::Accessor::Fast );
+use base qw( Data::ObjectDriver );
 
-__PACKAGE__->mk_accessors(qw( on_search on_lookup drivers ));
+use HO::class
+    _rw => on_search => '$',
+    _rw => on_lookup => '$',
+    _rw => drivers => '$';
 
 use Carp qw( croak );
 

@@ -18,7 +18,7 @@ sub class_properties {{
         fallback => DBIx::ObjectDriver::Driver::DBI->new(
             dsn      => 'dbi:SQLite:dbname=global.db',
             pk_generator => \&generate_pk,
-            reuse_dbh => 1,
+          #  reuse_dbh => 1,
         ),
         pk_generator => \&generate_pk,
     ),

@@ -8,8 +8,8 @@ use base qw( Class::Data::Inheritable );
 
 use Carp ();
 
+use subs qw/init/;
 use HO::class
-   init => 'hash',
    _rw => cache => '$',
    _rw => fallback => '$',
    _rw => txn_buffer => '$';
@@ -79,10 +79,11 @@ sub cache_object {
         if $driver->Disabled;
     ## If it's already cached in this layer, assume it's already cached in
     ## all layers below this, as well.
-    unless (exists $obj->{__cached} && $obj->{__cached}{ref $driver}) {
+    my $props = $obj->properties;
+    unless (exists $props->{__cached} && $props->{__cached}{ref $driver}) {
         $driver->modify_cache(sub {
             $driver->add_to_cache(
-                $driver->cache_key(ref($obj), $obj->primary_key),
+                $driver->cache_key($obj->datasource, $obj->primary_key),
                 $driver->deflate($obj)
             );
         });
@@ -92,17 +93,17 @@ sub cache_object {
 
 sub lookup {
     my $driver = shift;
-    my($class, $id) = @_;
+    my($ds, $rec, $id) = @_;
     return unless defined $id;
-    return $driver->fallback->lookup($class, $id)
+    return $driver->fallback->lookup($ds,$rec,$id)
         if $driver->Disabled or $driver->txn_active;
-    my $key = $driver->cache_key($class, $id);
+    my $key = $driver->cache_key($ds, $id);
     my $obj = $driver->get_from_cache($key);
     if ($obj) {
-        $obj = $driver->inflate($class, $obj);
+        $obj = $driver->inflate($ds, $obj);
         $obj->{__cached}{ref $driver} = 1;
     } else {
-        $obj = $driver->fallback->lookup($class, $id);
+        $obj = $driver->fallback->lookup($ds, $rec, $id);
     }
     $obj;
 }
@@ -123,18 +124,18 @@ sub get_multi_from_cache {
 
 sub lookup_multi {
     my $driver = shift;
-    my($class, $ids) = @_;
-    return $driver->fallback->lookup_multi($class, $ids)
+    my($ds, $rec, $ids) = @_;
+    return $driver->fallback->lookup_multi($ds, $rec, $ids)
         if $driver->Disabled or $driver->txn_active;
 
-    my %id2key = map { $_ => $driver->cache_key($class, $_) } grep { defined } @$ids;
+    my %id2key = map { $_ => $driver->cache_key($ds, $_) } grep { defined } @$ids;
     my $got = $driver->get_multi_from_cache(values %id2key);
 
     ## If we got back all of the objects from the cache, return immediately.
     if (scalar keys %$got == @$ids) {
         my @objs;
         for my $id (@$ids) {
-            my $obj = $driver->inflate($class, $got->{ $id2key{$id} });
+            my $obj = $driver->inflate($ds, $got->{ $id2key{$id} });
             $obj->{__cached}{ref $driver} = 1;
             push @objs, $obj;
         }
@@ -146,7 +147,7 @@ sub lookup_multi {
     my($i, @got, @need, %need2got) = (0);
     for my $id (@$ids) {
         if (defined $id && (my $obj = $got->{ $id2key{$id} })) {
-            $obj = $driver->inflate($class, $obj);
+            $obj = $driver->inflate($ds, $obj);
             $obj->{__cached}{ref $driver} = 1;
             push @got, $obj;
         } else {
@@ -158,7 +159,7 @@ sub lookup_multi {
     }
 
     if (@need) {
-        my $more = $driver->fallback->lookup_multi($class, \@need);
+        my $more = $driver->fallback->lookup_multi($ds, $rec, \@need);
         $i = 0;
         for my $obj (@$more) {
             $got[ $need2got{$i++} ] = $obj;
@@ -179,7 +180,7 @@ sub search {
     my $driver = shift;
     return $driver->fallback->search(@_)
         if $driver->Disabled;
-    my($class, $terms, $args) = @_;
+    my($ds, $rec, $terms, $args) = @_;
 
     ## If the caller has asked only for certain columns, assume that
     ## he knows what he's doing, and fall back to the backend.
@@ -188,11 +189,11 @@ sub search {
 
     ## Tell the fallback driver to fetch only the primary columns,
     ## then run the search using the fallback.
-    local $args->{fetchonly} = $class->primary_key_tuple;
+    local $args->{fetchonly} = $ds->primary_key_tuple;
     ## Disable triggers for this load. We don't want the post_load trigger
     ## being called twice.
     local $args->{no_triggers} = 1;
-    my @objs = $driver->fallback->search($class, $terms, $args);
+    my @objs = $driver->fallback->search($ds, $rec, $terms, $args);
 
     my $windowed = (!wantarray) && $args->{window_size};
 
@@ -203,7 +204,7 @@ sub search {
             my $d = $driver;
             while ( (!@window) && @objs ) {
                 my $objs = $driver->lookup_multi(
-                    $class,
+                    $ds, $rec,
                     [ map { $_->primary_key }
                           splice( @objs, 0, $window_size ) ]
                 );
@@ -217,7 +218,7 @@ sub search {
     } else {
         ## Load all of the objects using a lookup_multi, which is fast from
         ## cache.
-        my $objs = $driver->lookup_multi($class, [ map { $_->primary_key } @objs ]);
+        my $objs = $driver->lookup_multi($ds, $rec, [ map { $_->primary_key } @objs ]);
         return $driver->list_or_iterator($objs);
     }
 }
@@ -276,12 +277,13 @@ sub uncache_object {
     my($obj) = @_;
     my $key = $driver->cache_key(ref($obj), $obj->primary_key);
     return $driver->modify_cache(sub {
-        delete $obj->{__cached};
+        delete $obj->properties->{__cached};
         $driver->remove_from_cache($key);
         $driver->fallback->uncache_object($obj);
     });
 }
 
+# this needs some care
 sub cache_key {
     my $driver = shift;
     my($class, $id) = @_;
@@ -311,7 +313,7 @@ sub DESTROY { }
 
 sub AUTOLOAD {
     my $driver = $_[0];
-    (my $meth = our $AUTOLOAD) =~ s/.+:://;
+    (my $meth = our $AUTOLOAD) =~ s/.+:://; Carp::confess unless $driver->fallback;
     my $fallback = $driver->fallback;
     ## Check for invalid methods, but make sure we still allow
     ## chaining 2 caching drivers together.

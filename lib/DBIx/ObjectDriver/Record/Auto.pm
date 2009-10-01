@@ -7,14 +7,14 @@ my %record_classes;
 
 sub get_for_class {
     my ($self,$class,$columns) = @_;
-    my $num = keys(%record_classes) + 1;
     return $record_classes{$class} if defined $record_classes{$class};
 
+    my $num = keys(%record_classes) + 1;
     my $dyn = "DBIx::ObjectDriver::Record::Auto::__ANON__::${num}";
     eval "package $dyn; BEGIN { our \@ISA = ('DBIx::ObjectDriver::Record::Auto'); };"
        . "use HO::class " . join(',',map({sprintf('_rw => %s => \'$\'',$_)} @$columns));
 
-   return $dyn->new;
+   return $record_classes{$class} = $dyn->new;
 }
 
 sub get_slot {
