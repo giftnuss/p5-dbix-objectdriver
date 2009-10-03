@@ -89,16 +89,16 @@ my $is = Ingredient->lookup_multi([
         [ $recipe->recipe_id, $i2->id ],
     ]);
 is scalar(@$is), 2;
-ok $is->[0]{__cached};
-ok !$is->[1]{__cached};
+ok $is->[0]->status->{'cached'};
+ok !$is->[1]->status->{'cached'};
 
 $is = Ingredient->lookup_multi([
         [ $recipe->recipe_id, $ingredient->id ],
         [ $recipe->recipe_id, $i2->id ],
     ]);
 is scalar(@$is), 2;
-ok $is->[0]{__cached};
-ok $is->[1]{__cached};
+ok $is->[0]->status->{'cached'};
+ok $is->[1]->status->{'cached'};
 
 my $i3 = Ingredient->new;
 $i3->recipe_id($recipe->recipe_id);
@@ -112,7 +112,7 @@ is scalar(@is), 3;
 
 ## Flour should not yet be cached.
 my $i4 = Ingredient->lookup([ $recipe->recipe_id, $i3->id ]);
-ok !$i4->{__cached};
+ok !$i4->status->{'cached'};
 is $i4->name, 'Flour';
 
 ## verify it's in the cache
@@ -135,19 +135,19 @@ is scalar(@is), 3;
 
 ## Flour should now be cached.
 $i4 = Ingredient->lookup([ $recipe->recipe_id, $i3->id ]);
-ok $i4->{__cached};
+ok $i4->status->{'cached'};
 is $i4->name, 'Flour';
 
 ## Now look up the recipe, so that we make sure it gets cached...
 my $r3 = Recipe->lookup($recipe->recipe_id);
-ok !$r3->{__cached};
+ok !$r3->status->{'cached'};
 is $r3->recipe_id, $recipe->recipe_id;
 is $r3->title, $recipe->title;
 
 ## Now look it up again. We should get the cached version, and it
 ## should get inflated.
 $r3 = Recipe->lookup($recipe->recipe_id);
-ok $r3->{__cached};
+ok $r3->status->{'cached'};
 is $r3->recipe_id, $recipe->recipe_id;
 is $r3->title, $recipe->title;
 $ingredients = $r3->{__ingredients};
@@ -163,10 +163,10 @@ is $ingredients->[0]->quantity, $ingredient->quantity;
 ## changes the next time we try to do a lookup.
 *Recipe::cache_version = *Recipe::cache_version = sub { '1.0' };
 $r3 = Recipe->lookup($recipe->recipe_id);
-ok !$r3->{__cached};
+ok !$r3->status->{'cached'};
 
 $r3 = Recipe->lookup($recipe->recipe_id);
-ok $r3->{__cached};
+ok $r3->status->{'cached'};
 
 ## test replace 
 my $to_replace = Recipe->new;
@@ -175,7 +175,7 @@ $to_replace->replace;
 ok (my $rid = $to_replace->recipe_id);
 
 my $replaced = Recipe->lookup($rid);
-ok ! $replaced->{__cached};
+ok ! $replaced->status->{'cached'};
 
 $to_replace = Recipe->new;
 $to_replace->recipe_id($rid);
@@ -183,7 +183,7 @@ $to_replace->title('Cup Cake');
 $to_replace->replace;
 
 $replaced = Recipe->lookup($rid);
-ok $replaced->{__cached};
+ok $replaced->status->{'cached'};
 is $replaced->title, 'Cup Cake';
 
 require 't/txn-common.pl';

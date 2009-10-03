@@ -78,9 +78,9 @@ my $is = Ingredient->lookup_multi([
     ]);
 is scalar(@$is), 2;
 is $is->[0]->name, 'Egg';
-ok $is->[0]->{__cached};
+ok $is->[0]->status->{'cached'};
 is $is->[1]->name, 'Milk';
-ok !$is->[1]->{__cached};
+ok !$is->[1]->status->{'cached'};
 
 ## Do it again! They should both be cached, now.
 $is = Ingredient->lookup_multi([
@@ -89,8 +89,8 @@ $is = Ingredient->lookup_multi([
     ]);
 is scalar(@$is), 2;
 is $is->[0]->name, 'Egg';
-ok $is->[0]->{__cached};
+ok $is->[0]->status->{'cached'};
 is $is->[1]->name, 'Milk';
-ok $is->[1]->{__cached};
+ok $is->[1]->status->{'cached'};
 
 sub DESTROY { teardown_dbs(qw( global )); }
