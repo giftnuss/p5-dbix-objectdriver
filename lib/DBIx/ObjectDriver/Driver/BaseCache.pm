@@ -101,7 +101,7 @@ sub lookup {
     my $obj = $driver->get_from_cache($key);
     if ($obj) {
         $obj = $driver->inflate($ds, $obj);
-        $obj->{__cached}{ref $driver} = 1;
+        $obj->status->{'cached'}{ref $driver} = 1;
     } else {
         $obj = $driver->fallback->lookup($ds, $rec, $id);
     }
@@ -136,7 +136,7 @@ sub lookup_multi {
         my @objs;
         for my $id (@$ids) {
             my $obj = $driver->inflate($ds, $got->{ $id2key{$id} });
-            $obj->{__cached}{ref $driver} = 1;
+            $obj->status->{'cached'}{ref $driver} = 1;
             push @objs, $obj;
         }
         return \@objs;
@@ -148,7 +148,7 @@ sub lookup_multi {
     for my $id (@$ids) {
         if (defined $id && (my $obj = $got->{ $id2key{$id} })) {
             $obj = $driver->inflate($ds, $obj);
-            $obj->{__cached}{ref $driver} = 1;
+            $obj->status->{'cached'}{ref $driver} = 1;
             push @got, $obj;
         } else {
             push @got, undef;
