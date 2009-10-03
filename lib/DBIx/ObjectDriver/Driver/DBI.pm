@@ -194,7 +194,7 @@ sub load_object_from_rec {
     $obj->set_record_values($rec);
     ## Don't need a duplicate as there's no previous version in memory
     ## to preserve.
-    $obj->__is_stored = 1;
+    $obj->status->{'is_stored'} = 1;
     $obj->post_load unless $no_triggers;
     return $obj;
 }
@@ -413,7 +413,7 @@ sub _insert_or_replace {
     $obj->post_save($orig_obj);
     $obj->post_insert($orig_obj);
 
-    $orig_obj->__is_stored = 1;
+    $orig_obj->status->{'is_stored'} = 1;
     $orig_obj->reset_changed_cols;
     1;
 }
@@ -502,7 +502,7 @@ sub remove {
 
     $obj->post_remove($orig_obj);
 
-    $orig_obj->__is_stored = 1;
+    $orig_obj->status->{'is_stored'} = 1;
     return $result;
 }
 

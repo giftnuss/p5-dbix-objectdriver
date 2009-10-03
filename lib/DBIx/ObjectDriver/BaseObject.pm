@@ -24,9 +24,9 @@ our $TransactionLevel = 0;
 use subs qw/init/;
 use HO::class
     _lvalue => properties => '%',
+    _lvalue => status => '%',
     _rw => column_values => '%',
     _rw => _changed_cols => '%',
-    _lvalue => __is_stored => '$',
     _rw => _trigger => 'trigger'
     ;
 
@@ -35,6 +35,7 @@ use Data::Dumper;
 sub init {
     my $self = shift;
     $self->_install_properties($self->class_properties);
+    $self->status->{'is_stored'} = 0;
 
     while (@_) {
         my $field = shift;
@@ -342,8 +343,9 @@ sub is_same {
 
 sub object_is_stored {
     my $obj = shift;
-    return $obj->{__is_stored} ? 1 : 0;
+    return $obj->status->{'is_stored'} ? 1 : 0;
 }
+
 sub pk_str {
     my ($obj) = @_;
     my $pk = $obj->primary_key;
