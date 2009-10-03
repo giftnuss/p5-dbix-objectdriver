@@ -79,8 +79,8 @@ sub cache_object {
         if $driver->Disabled;
     ## If it's already cached in this layer, assume it's already cached in
     ## all layers below this, as well.
-    my $props = $obj->properties;
-    unless (exists $props->{__cached} && $props->{__cached}{ref $driver}) {
+    my $status = $obj->status;
+    unless (exists $status->{'cached'} && $status->{'cached'}{ref $driver}) {
         $driver->modify_cache(sub {
             $driver->add_to_cache(
                 $driver->cache_key($obj->datasource, $obj->primary_key),
@@ -277,7 +277,7 @@ sub uncache_object {
     my($obj) = @_;
     my $key = $driver->cache_key(ref($obj), $obj->primary_key);
     return $driver->modify_cache(sub {
-        delete $obj->properties->{__cached};
+        delete $obj->status->{'cached'};
         $driver->remove_from_cache($key);
         $driver->fallback->uncache_object($obj);
     });
