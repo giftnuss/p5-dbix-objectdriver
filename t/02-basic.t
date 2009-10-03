@@ -165,7 +165,7 @@ setup_dbs({
     ok $r2->replace;
 
     ## check
-    $r = Recipe->lookup($rid);
+    $r = $r2->lookup($rid);
     is $r->title, 'new title';
 
     $r2 = Recipe->new;
@@ -173,7 +173,7 @@ setup_dbs({
     ok $r2->replace;
 
     ## check
-    $r = Recipe->lookup($rid);
+    $r = $r2->lookup($rid);
     is $r->title, undef;
 }
 
@@ -193,7 +193,7 @@ setup_dbs({
     $r->title('replaced');
     $r->recipe_id("lamer");
     dies_ok { $r->replace };
-    $r = Recipe->lookup($id);
+    $r = $r->lookup($id);
     ok $r;
     is $r->title, "to replace";
 
@@ -204,7 +204,7 @@ setup_dbs({
         $r->title('replaced');
         $r->recipe_id("lamer");
         dies_ok { $r->replace };
-        $r = Recipe->lookup($id);
+        $r = $r->lookup($id);
         ok $r;
         is $r->title, "to replace";
         # emulate a driver which doesn't support REPLACE INTO

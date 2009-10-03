@@ -12,7 +12,7 @@ sub class_properties {{
     primary_key => 'recipe_id',
     driver => DBIx::ObjectDriver::Driver::DBI->new(
         dsn      => 'dbi:SQLite:dbname=global.db',
-        reuse_dbh => 1,
+        #reuse_dbh => 1,
     ),
 }};
 
