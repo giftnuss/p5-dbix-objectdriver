@@ -482,9 +482,9 @@ sub reset_changed_cols {
 sub is_changed {
     my $obj = shift;
     if (@_) {
-        return exists $obj->{changed_cols}->{$_[0]};
+        return exists $obj->_changed_cols->{$_[0]};
     } else {
-        return $obj->changed_cols > 0;
+        return 0+keys(%{$obj->_changed_cols}) > 0;
     }
 }
 
