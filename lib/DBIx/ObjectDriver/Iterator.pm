@@ -13,7 +13,7 @@ use overload
         while (my $obj = $self->()) {
             push @objs, $obj;
         }
-        return @objs;
+        return \@objs;
     },
     fallback => 1;
 
