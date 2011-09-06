@@ -59,22 +59,26 @@ setup_dbs({
     $p2->save;
 
     ## save behaves correctly (there's never an UPDATE)
-    my @res = PkLess->search();
+    ## search returns iterator - cast to array is required
+    my @res = @{ $p2->search() };
     is scalar @res, 2, "Pk-less populated correctly";
 }
 
 # simple class pk fields
 {
-    isa_ok(Wine->primary_key_tuple(), 'ARRAY', q(Wine's primary key tuple is an arrayref));
-    is_deeply(Wine->primary_key_tuple(), ['id'], q(Wine's primary key tuple contains the string 'id'));
-    is_deeply(Wine->primary_key_to_terms([100]), { id => 100 });
+    my $wine = Wine->new;
+    isa_ok($wine->primary_key_tuple(), 'ARRAY', q(Wine's primary key tuple is an arrayref));
+    is_deeply($wine->primary_key_tuple(), ['id'], q(Wine's primary key tuple contains the string 'id'));
+    is_deeply($wine->primary_key_to_terms([100]), { id => 100 });
 }
 
 # complex class pk fields
 {
-    isa_ok(Ingredient->primary_key_tuple, 'ARRAY', q(Ingredient's primary key tuple is an arrayref));
-    is_deeply(Ingredient->primary_key_tuple, ['recipe_id', 'id'], q(Ingredient instance's primary key tuple contains 'recipe_id' and 'id'));
-    is_deeply(Ingredient->primary_key_to_terms([100, 1000]), { recipe_id => 100, id => 1000 });
+    my $ing = Ingredient->new;
+    isa_ok($ing->primary_key_tuple, 'ARRAY', q(Ingredient's primary key tuple is an arrayref));
+    is_deeply($ing->primary_key_tuple, ['recipe_id', 'id'], 
+        q(Ingredient instance's primary key tuple contains 'recipe_id' and 'id'));
+    is_deeply($ing->primary_key_to_terms([100, 1000]), { recipe_id => 100, id => 1000 });
 }
 
 # simple instance pk fields
@@ -95,7 +99,8 @@ setup_dbs({
 
 # 0 might be a valid pk
 { 
-    my $rv = Wine->remove({});
+    my $wine = Wine->new;
+    my $rv = $wine->remove({});
     # make sure that remove returns the number of records deleted (1)
     is($rv, 1, 'correct number of rows deleted');
 
