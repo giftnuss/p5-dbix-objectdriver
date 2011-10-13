@@ -15,31 +15,12 @@ Test::ClassAPI->execute('complete') unless $@;
 
 __DATA__
 
-Class::Accessor::Fast   = interface
 DBIx::ObjectDriver      = class
 DBIx::ObjectDriver::Driver::DBI = class
 DBIx::ObjectDriver::SQL = class
 DBIx::ObjectDriver::BaseObject = class
 
-[Class::Accessor::Fast]
-new                             = method
-accessor_name_for               = method
-best_practice_accessor_name_for = method
-best_practice_mutator_name_for  = method
-follow_best_practice            = method
-make_accessor                   = method
-make_ro_accessor                = method
-make_wo_accessor                = method
-mk_accessors                    = method
-mk_ro_accessors                 = method
-mk_wo_accessors                 = method
-mutator_name_for                = method
-get                             = method
-set                             = method
-subname                         = method
-
 [DBIx::ObjectDriver]
-Class::Accessor::Fast = implements
 new                   = method
 begin_work            = method
 cache_object          = method
@@ -100,7 +81,6 @@ username    = method
 
 
 [DBIx::ObjectDriver::SQL]
-Class::Accessor::Fast = implements
 add_complex_where     = method
 add_having    = method
 add_index_hint        = method
