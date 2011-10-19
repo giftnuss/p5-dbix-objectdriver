@@ -162,7 +162,7 @@ setup_dbs({
     my $r2 = Recipe->new;
     $r2->recipe_id($rid);
     $r2->title('new title');
-    ok $r2->replace;
+    ok $r2->replace,'replace 1';
 
     ## check
     $r = $r2->lookup($rid);
@@ -170,7 +170,7 @@ setup_dbs({
 
     $r2 = Recipe->new;
     $r2->recipe_id($rid);
-    ok $r2->replace;
+    ok $r2->replace,'replace 2';
 
     ## check
     $r = $r2->lookup($rid);
@@ -227,9 +227,9 @@ setup_dbs({
 # Remove counts
 {
     # Clear out the wine table
-    ok (Wine->remove(), 'delete all from Wine table');
+    ok (Wine->new->remove(), 'delete all from Wine table');
+    is (Wine->new->remove({name=>'moooo'}), 0E0, 'No rows deleted');
 
-    is (Wine->remove({name=>'moooo'}), 0E0, 'No rows deleted');
     my @bad_wines = qw(Thunderbird MadDog Franzia);
     foreach my $name (@bad_wines) {
         my $w = Wine->new;
