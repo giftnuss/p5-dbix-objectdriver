@@ -8,20 +8,27 @@ BEGIN: {
 
 use DBIx::ObjectDriver;
 use DBIx::ObjectDriver::Driver::DBI;
-use DBIx::ObjectDriver::SQL;
 use DBIx::ObjectDriver::BaseObject;
 
 Test::ClassAPI->execute('complete') unless $@;
 
 __DATA__
 
-DBIx::ObjectDriver      = class
-DBIx::ObjectDriver::Driver::DBI = class
-DBIx::ObjectDriver::SQL = class
+DBIx::ObjectDriver = class
 DBIx::ObjectDriver::BaseObject = class
+DBIx::ObjectDriver::Driver::DBI = class
+DBIx::ObjectDriver::Iterator = class
 
 [DBIx::ObjectDriver]
+# generated
 new                   = method
+# accessors
+pk_generator          = method
+record_map            = method
+txn_active            = method
+# my additiions
+with                  = method
+# original api
 begin_work            = method
 cache_object          = method
 commit                = method
@@ -32,13 +39,16 @@ debug                 = method
 end_query             = method
 list_or_iterator      = method
 logger                = method
-pk_generator          = method
 profiler              = method
 record_query          = method
 rollback              = method
 start_query           = method
-txn_active            = method
 uncache_object        = method
+
+[DBIx::ObjectDriver::Iterator]
+new                   = method
+next                  = method
+end                   = method
 
 [DBIx::ObjectDriver::Driver::DBI]
 begin_work  = method
@@ -78,39 +88,6 @@ subname     = method
 table_for   = method
 update      = method
 username    = method
-
-
-[DBIx::ObjectDriver::SQL]
-add_complex_where     = method
-add_having    = method
-add_index_hint        = method
-add_join      = method
-add_select    = method
-add_where     = method
-as_aggregate  = method
-as_limit      = method
-as_sql        = method
-as_sql_having = method
-as_sql_where  = method
-bind          = method
-column_mutator        = method
-comment               = method
-distinct              = method
-from          = method
-group         = method
-has_where     = method
-having        = method
-index_hint            = method
-joins         = method
-limit         = method
-offset        = method
-order         = method
-select        = method
-select_map    = method
-select_map_reverse = method
-subname            = method
-where         = method
-where_values  = method
 
 [DBIx::ObjectDriver::BaseObject]
 # add_trigger   = method

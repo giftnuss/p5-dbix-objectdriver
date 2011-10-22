@@ -1,13 +1,10 @@
-# $Id$
-
-package DBIx::ObjectDriver::Driver::DBI;
-use strict;
-use warnings;
+  package DBIx::ObjectDriver::Driver::DBI;
+# ****************************************
+use strict; use warnings;
 
 use DBI;
 use Carp ();
 use DBIx::ObjectDriver::Errors;
-use DBIx::ObjectDriver::SQL;
 use DBIx::ObjectDriver::Driver::DBD;
 use DBIx::ObjectDriver::Iterator;
 
@@ -37,9 +34,11 @@ sub init {
         my $type;
         if (my $dsn = $driver->dsn) {
             ($type) = $dsn =~ /^dbi:(\w*)/i;
-        } elsif (my $dbh = $driver->dbh) {
+        }
+        elsif (my $dbh = $driver->dbh) {
             $type = $dbh->{Driver}{Name};
-        } elsif (my $getter = $driver->get_dbh) {
+        } 
+        elsif (my $getter = $driver->get_dbh) {
 ## Ugly. Shouldn't have to connect just to get the driver name.
             my $dbh = $getter->();
             $type = $dbh->{Driver}{Name};
@@ -154,7 +153,6 @@ sub fetch {
     $_[1] = $rec;
 
     my ($sql, $bind, $stmt) = $driver->prepare_fetch($ds, $orig_terms, $orig_args);
-
     my @bind;
     my $map = $stmt->select_map;
 
@@ -202,7 +200,6 @@ sub load_object_from_rec {
 sub search {
     my ($driver) = shift;
     my ($ds, $rec, $terms, $args) = @_;
-
     my $sth = $driver->fetch($ds, $rec, $terms, $args);
 
     my $iter = sub {
@@ -342,7 +339,7 @@ sub insert {
 
 sub _insert_or_replace {
     my $driver = shift;
-    my($orig_obj, $options) = @_;
+    my($orig_obj, $record, $options) = @_;
 
     ## Syntax switch between INSERT or REPLACE statement based on options
     $options ||= {};
@@ -421,7 +418,7 @@ sub _insert_or_replace {
 sub update {
     my $driver = shift;
 
-    my($orig_obj, $terms) = @_;
+    my($orig_obj, $record, $terms) = @_;
 
     ## Use a duplicate so the pre_save trigger can modify it.
     my $obj = $orig_obj->clone_all;
@@ -481,7 +478,22 @@ sub update {
 
 sub remove {
     my $driver = shift;
-    my $orig_obj = shift;
+    my ($orig_obj,$rec,$terms,$args) = @_;
+
+    if(defined($terms) || defined($args)) {
+        if ($args && $args->{nofetch}) {
+            return $driver->direct_remove($orig_obj, $terms, $args);
+        } 
+        else {
+            my $result = 0;
+            my $iter = $driver->search($orig_obj,$rec,$terms,$args);
+            while(my $obj = $iter->next()) {
+                my $res = $obj->remove || 0;
+                $result += $res;
+            }
+            return $result || 0E0;
+        }
+    }
 
     return unless $orig_obj->has_primary_key;
 

@@ -9,7 +9,7 @@ use Carp qw( croak );
 use DBIx::ObjectDriver::Errors;
 
 use constant ERROR_MAP => {
-    1062 => Data::ObjectDriver::Errors->UNIQUE_CONSTRAINT,
+    1062 => DBIx::ObjectDriver::Errors->UNIQUE_CONSTRAINT,
 };
 
 sub fetch_id { $_[3]->{mysql_insertid} || $_[3]->{insertid} }

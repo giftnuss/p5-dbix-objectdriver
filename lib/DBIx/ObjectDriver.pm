@@ -1,8 +1,10 @@
-# $Id$
-
-package DBIx::ObjectDriver;
+  package DBIx::ObjectDriver;
+# ***************************
 use strict; use warnings; use utf8;
 
+our $VERSION = '0.08';
+
+use DBIx::ObjectDriver::Iterator ();
 use Carp ();
 
 use subs qw/init/;
@@ -17,6 +19,7 @@ sub with {
     my ($self,$symbol,$creator) = @_;
     my $r;
     $symbol = $symbol->() if ref $symbol;
+ 
     unless(ref($creator) eq 'CODE' && 
            ($r = $creator->()) && $r->isa('DBIx::ObjectDriver::Record')) {
         Carp::croak ('Not a code ref for creating record objects.')
@@ -30,9 +33,7 @@ sub _with {
     return $self->record_map($symbol)
 }
 
-use DBIx::ObjectDriver::Iterator;
-
-our $VERSION = '0.06';
+# ------------
 our $DEBUG = $ENV{DOD_DEBUG} || 0;
 our $PROFILE = $ENV{DOD_PROFILE} || 0;
 our $PROFILER;
@@ -146,6 +147,8 @@ sub list_or_iterator {
 
 sub cache_object { }
 sub uncache_object { }
+
+
 
 1;
 __END__

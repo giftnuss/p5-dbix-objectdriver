@@ -1,8 +1,6 @@
-# $Id$
-
-package DBIx::ObjectDriver::BaseObject;
-use strict;
-use warnings;
+  package DBIx::ObjectDriver::BaseObject;
+# ***************************************
+use strict; use warnings;
 
 our $HasWeaken;
 eval q{ use Scalar::Util qw(weaken) }; ## no critic
@@ -57,8 +55,6 @@ sub create {
         my $val   = shift;
         $self->$field($val);
     }
-    #$new->_trigger()
-    #print Dumper($new);
     return $new;
 }
 
@@ -598,7 +594,7 @@ sub _proxy {
         $driver->begin_work;
         push @WorkingDrivers, $driver;
     }
-    $driver->$meth($obj, @args);
+    $driver->$meth($obj, scalar $obj->record, @args);
 }
 
 ## Record

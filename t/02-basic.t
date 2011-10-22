@@ -22,7 +22,14 @@ BEGIN {
     }
 }
 
-plan tests => 67;
+plan tests => 70;
+
+# class Hierarchy;
+{
+    my $w = Wine->new;
+    isa_ok($w,'Wine');
+    isa_ok($w,'DBIx::ObjectDriver::BaseObject');
+}
 
 use Wine;
 use Recipe;
@@ -71,6 +78,13 @@ setup_dbs({
     ok ($w, 'constructed a new Wine');
     is ($w->name, 'Mouton Rothschild', 'name constructor');
     is ($w->rating, 4, 'rating constructor');
+}
+
+# Constructor testing II
+{
+    dies_ok {
+        my $w = Wine->new(name => 'Riesling', ratin => 2);
+    } "dies on unknown column in constructor";
 }
 
 # lookup with hash (single pk) 
@@ -226,8 +240,8 @@ setup_dbs({
 
 # Remove counts
 {
-    # Clear out the wine table
-    ok (Wine->new->remove(), 'delete all from Wine table');
+    # Clear out the wine table with a query matching all rows
+    ok (Wine->new->remove({name => {op => '!=', value => ''}}), 'delete all from Wine table');
     is (Wine->new->remove({name=>'moooo'}), 0E0, 'No rows deleted');
 
     my @bad_wines = qw(Thunderbird MadDog Franzia);
@@ -236,7 +250,8 @@ setup_dbs({
         $w->name($name);
         ok $w->save, "Saving bad_wine $name";
     }
-    is (Wine->remove(), scalar(@bad_wines), 'removing all bad wine');
+    is (Wine->new->remove({name => \@bad_wines}),
+        scalar(@bad_wines), 'removing all bad wine');
 
     # Do it again with direct remove from the DB
     foreach my $name (@bad_wines) {
@@ -246,9 +261,9 @@ setup_dbs({
     }
     # note sqlite is stupid and doesn't return the number of affected rows
     # quick hack because I can't rely on version.pm to be installed everywhere
-    my ($sqlite_version) = Wine->driver->rw_handle->{sqlite_version} =~ /(\d+(?:\.\d+))/;
+    my ($sqlite_version) = Wine->new->driver->rw_handle->{sqlite_version} =~ /(\d+(?:\.\d+))/;
     my $count = $sqlite_version > 3.5 ? scalar @bad_wines : "0E0";
-    is (Wine->remove({}, { nofetch => 1 }), $count, 'removing all bad wine');
+    is (Wine->new->remove({name => \@bad_wines}, { nofetch => 1 }), $count, 'removing all bad wine');
 }
 
 # different utilities
@@ -261,7 +276,7 @@ setup_dbs({
     $w3->name("different");
     $w3->insert;
 
-    my $w2 = Wine->lookup($w1->id);
+    my $w2 = Wine->new->lookup($w1->id);
     ok  $w1->is_same($w1);
     ok  $w2->is_same($w1);
     ok  $w1->is_same($w2);
@@ -277,7 +292,7 @@ setup_dbs({
     ok !$w->object_is_stored, "this object needs to be saved!";
     $w->save;
     ok $w->object_is_stored, "this object is no saved";
-    my $w2 = Wine->lookup( $w->id );
+    my $w2 = Wine->new->lookup( $w->id );
     ok $w2->object_is_stored, "an object fetched from the database is by definition NOT ephemeral";
 }
 

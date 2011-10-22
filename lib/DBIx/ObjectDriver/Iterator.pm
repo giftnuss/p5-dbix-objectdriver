@@ -1,7 +1,8 @@
-package DBIx::ObjectDriver::Iterator;
+  package DBIx::ObjectDriver::Iterator;
+# *************************************
+use strict; use warnings;
 
-use strict;
-use warnings;
+our $VERSION = '0.08';
 
 my %Iterators = ();
 
@@ -44,3 +45,6 @@ sub DESTROY {
 }
 
 1;
+
+__END__
+

@@ -1,20 +1,22 @@
-# $Id$
+  package DBIx::ObjectDriver::Driver::DBD;
+# ****************************************
+use strict; use warnings; use utf8;
 
-package DBIx::ObjectDriver::Driver::DBD;
-use strict;
-use warnings;
+use DBI ();
+use Class::Load ();
+use Data::ObjectDriver::SQL;
 
-
-sub new {
-    my $class = shift;
-    my($name) = @_;
+sub init {
+    my ($self,$name) = @_;
     die "No Driver" unless $name;
+    my $class = ref $self;
     my $subclass = join '::', $class, $name;
-    eval "require $subclass"; ## no critic
-    die $@ if $@;
-    $subclass->import if $subclass->can('import');
-    bless {}, $subclass;
+    Class::Load::load_class($subclass);
+    # import call for subclass skipped - is it really required?
+    return bless $self, $subclass;
 }
+
+use HO::class;
 
 sub init_dbh { }
 sub bind_param_attributes { }
@@ -40,7 +42,7 @@ sub can_replace { 0 }
 # Some drivers have problems with prepared caches
 sub can_prepare_cached_statements { 1 };
 
-sub sql_class { 'DBIx::ObjectDriver::SQL' }
+sub sql_class { 'Data::ObjectDriver::SQL' }
 
 1;
 
