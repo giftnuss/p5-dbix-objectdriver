@@ -4,7 +4,7 @@ use strict; use warnings; use utf8;
 
 use DBI ();
 use Class::Load ();
-use Data::ObjectDriver::SQL;
+use DBIx::ObjectDriver::SQL;
 
 sub init {
     my ($self,$name) = @_;
@@ -42,7 +42,7 @@ sub can_replace { 0 }
 # Some drivers have problems with prepared caches
 sub can_prepare_cached_statements { 1 };
 
-sub sql_class { 'Data::ObjectDriver::SQL' }
+sub sql_class { 'DBIx::ObjectDriver::SQL' }
 
 1;
 

@@ -2,7 +2,7 @@
 
 use strict;
 
-use Data::ObjectDriver::SQL;
+use DBIx::ObjectDriver::SQL;
 use Test::More tests => 67;
 
 my $stmt = ns();
@@ -256,4 +256,4 @@ is($stmt->as_sql, "SELECT foo\nFROM baz\n-- bad", "correctly untainted");
 $stmt->comment("G\\G");
 is($stmt->as_sql, "SELECT foo\nFROM baz\n-- G", "correctly untainted");
 
-sub ns { Data::ObjectDriver::SQL->new }
+sub ns { DBIx::ObjectDriver::SQL->new }

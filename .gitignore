@@ -1,0 +1,8 @@
+*~
+MYMETA.yml
+MYMETA.json
+Build
+_build/
+global.db
+blib/
+site-lib/

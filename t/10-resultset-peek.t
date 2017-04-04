@@ -9,7 +9,7 @@ use lib 't/lib';
 
 require 't/lib/db-common.pl';
 
-$Data::ObjectDriver::DEBUG = 0;
+$DBIx::ObjectDriver::DEBUG = 0;
 use Test::More;
 unless (eval { require DBD::SQLite }) {
     plan skip_all => 'Tests require DBD::SQLite';
@@ -35,7 +35,7 @@ ok($wine->save, 'Object saved successfully');
 
 my $iter;
 
-$iter = Data::ObjectDriver::Iterator->new(sub {});
+$iter = DBIx::ObjectDriver::Iterator->new(sub {});
 my $wine_id = $wine->id;
 undef $wine;
 $wine = Wine->lookup($wine_id); 
