@@ -667,7 +667,7 @@ sub inflate {
     my($deflated) = @_;
     my $obj = $class->new;
     $obj->set_values($deflated->{columns});
-    $obj->{changed_cols} = {};
+    $obj->reset_changed_cols;
     $obj->post_inflate;
     return $obj;
 }

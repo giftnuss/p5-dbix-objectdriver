@@ -30,7 +30,8 @@ sub bind_param_attributes {
 sub map_error_code {
     my $dbd = shift;
     my($code, $msg) = @_;
-    if ($msg && $msg =~ /not unique/) {
+    Carp::carp $msg;
+    if ($msg && ($msg =~ /not unique/ || $msg =~ /UNIQUE constraint failed/)) {
         return DBIx::ObjectDriver::Errors->UNIQUE_CONSTRAINT;
     } else {
         return;

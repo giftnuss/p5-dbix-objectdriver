@@ -108,7 +108,7 @@ setup_dbs({
     $wine->id(0);
     $wine->name("zero");
     ok $wine->save;
-    $wine = Wine->lookup(0);
+    $wine = $wine->lookup(0);
     ok $wine;
     is $wine->name, "zero";
 }

@@ -2,15 +2,18 @@
 
 package ErrorTest;
 use strict;
-use base qw( Data::ObjectDriver::BaseObject );
+use base qw( DBIx::ObjectDriver::BaseObject );
 
-use Data::ObjectDriver::Driver::DBI;
+use DBIx::ObjectDriver::Driver::DBI;
 
-__PACKAGE__->install_properties({
-    columns => [ 'foo' ],
-    datasource => 'error_test',
-    primary_key =>  [ ],
-    driver => Data::ObjectDriver::Driver::DBI->new(
-        dsn      => 'dbi:SQLite:dbname=global.db',
-    ),
-});
+sub class_properties {
+	return {
+        columns => [ 'foo' ],
+        datasource => 'error_test',
+        primary_key =>  [ ],
+        driver => DBIx::ObjectDriver::Driver::DBI->new(
+            dsn      => 'dbi:SQLite:dbname=global.db',
+        ),
+}}
+
+1;

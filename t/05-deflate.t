@@ -44,10 +44,12 @@ is $r2->title, $recipe->title;
 {
     no warnings 'once';
     no warnings 'redefine';
-    *Data::ObjectDriver::Driver::Cache::Cache::deflate = sub {
+    *DBIx::ObjectDriver::Driver::Cache::Cache::deflate = sub {
+    
+    warn "GGGGGGGGGGGGGG";
         $_[1]->deflate;
     };
-    *Data::ObjectDriver::Driver::Cache::Cache::inflate = sub {
+    *DBIx::ObjectDriver::Driver::Cache::Cache::inflate = sub {
         $_[1]->inflate($_[2]);
     };
 }
@@ -60,7 +62,7 @@ $ingredient->name('Egg');
 $ingredient->quantity(5);
 $ingredient->save;
 
-my $i2 = Ingredient->lookup([ $recipe->recipe_id, $ingredient->id ]);
+my $i2 = $ingredient->lookup([ $recipe->recipe_id, $ingredient->id ]);
 is $i2->id, $ingredient->id;
 is $i2->recipe_id, $ingredient->recipe_id;
 is $i2->name, $ingredient->name;
@@ -72,7 +74,7 @@ $i3->name('Milk');
 $i3->quantity(1);
 $i3->save;
 
-my $is = Ingredient->lookup_multi([
+my $is = $ingredient->lookup_multi([
         [ $recipe->recipe_id, $ingredient->id ],
         [ $recipe->recipe_id, $i3->id ],
     ]);
@@ -83,7 +85,7 @@ is $is->[1]->name, 'Milk';
 ok !$is->[1]->status->{'cached'};
 
 ## Do it again! They should both be cached, now.
-$is = Ingredient->lookup_multi([
+$is = $ingredient->lookup_multi([
         [ $recipe->recipe_id, $ingredient->id ],
         [ $recipe->recipe_id, $i3->id ],
     ]);

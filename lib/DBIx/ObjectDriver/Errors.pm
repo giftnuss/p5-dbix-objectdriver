@@ -17,7 +17,7 @@ Data::ObjectDriver::Errors - container class for common database error codes
 =head1 SYNOPSIS
 
     eval { $driver->insert($obj); };
-    if ($@ && $driver->last_error() == Data::ObjectDriver::Errors->UNIQUE_CONSTRAINT) {
+    if ($@ && $driver->last_error() == DBIx::ObjectDriver::Errors->UNIQUE_CONSTRAINT) {
         ...
 
 =head1 DESCRIPTION
